@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-background: #fff8f3;
+    --color-surface: #fff8f3;
+    --color-surface-dim: #e0d9d2;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #faf2ec;
+    --color-surface-container: #f4ece6;
+    --color-surface-container-high: #efe7e0;
+    --color-surface-container-highest: #e9e1db;
+    --color-on-surface: #1e1b17;
+    --color-on-surface-variant: #574147;
+    --color-outline: #8a7077;
+    --color-outline-variant: #ddbfc6;
+    --color-primary: #620032;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #8b004a;
+    --color-on-primary-container: #ff91b7;
+    --color-primary-fixed: #ffd9e2;
+    --color-primary-fixed-dim: #ffb0c9;
+    --color-on-primary-fixed-variant: #8d034b;
+    --color-secondary: #5f5e58;
+    --color-secondary-container: #e5e2da;
+    --color-on-secondary-container: #65645e;
+    --color-tertiary: #2f2f2f;
+    --color-tertiary-fixed: #e5e2e1;
+    --color-error: #ba1a1a;
+  }
+}
+
+.font-data-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.font-label-md {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ddbfc6;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8a7077;
+}
+
+/* Zebra table styling */
+.zebra-table tr:nth-child(even) {
+  background-color: rgba(244, 236, 230, 0.4);
+}

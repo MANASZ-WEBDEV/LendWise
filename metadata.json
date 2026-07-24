@@ -1,0 +1,6 @@
+{
+  "name": "LendWise",
+  "description": "Private ledger dashboard for managing high-net-worth loan disbursements, debt tracking, interest accruals, repayments, and master audit trails.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
