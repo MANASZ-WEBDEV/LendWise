@@ -66,7 +66,7 @@ export default function App() {
           <Sidebar />
 
           {/* Main Content Pane */}
-          <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-[calc(100vh-3.5rem)]">
+          <main className="flex-1 md:ml-64 px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-4 overflow-y-auto min-h-[calc(100vh-3.5rem)]">
             <Routes>
               <Route path="/" element={<DashboardView />} />
               <Route path="/people" element={<PeopleView />} />
