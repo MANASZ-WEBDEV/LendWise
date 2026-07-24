@@ -50,6 +50,32 @@ export async function archivePerson(personId: string): Promise<void> {
 }
 
 /**
+ * Fetch all archived people for the current user.
+ */
+export async function fetchArchivedPeople(): Promise<DbPerson[]> {
+  const { data, error } = await supabase
+    .from('people')
+    .select('*')
+    .not('archived_at', 'is', null)
+    .order('name');
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Restore an archived person by clearing archived_at.
+ */
+export async function unarchivePerson(personId: string): Promise<void> {
+  const { error } = await supabase
+    .from('people')
+    .update({ archived_at: null })
+    .eq('id', personId);
+
+  if (error) throw error;
+}
+
+/**
  * Fetch full details and balances for a person, computing live accruing interest using the engine.
  */
 export async function fetchPersonSummary(person: DbPerson): Promise<PersonSummary> {

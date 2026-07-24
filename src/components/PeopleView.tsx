@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, archivePerson } from '../lib/supabase-queries';
+import { fetchPeople, fetchArchivedPeople, fetchPersonSummary, archivePerson, unarchivePerson } from '../lib/supabase-queries';
 import { PersonSummary } from '../types';
 import { formatINR } from '../lib/currency';
 import { AddPersonModal } from './AddPersonModal';
@@ -11,17 +11,17 @@ export const PeopleView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<PersonSummary[]>([]);
   const [search, setSearch] = useState('');
-  const [filterTab, setFilterTab] = useState<'ALL' | 'OWES_ME' | 'I_OWE_THEM'>('ALL');
+  const [filterTab, setFilterTab] = useState<'ALL' | 'OWES_ME' | 'I_OWE_THEM' | 'ARCHIVED'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [filterTab]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const people = await fetchPeople();
+      const people = filterTab === 'ARCHIVED' ? await fetchArchivedPeople() : await fetchPeople();
       const loaded: PersonSummary[] = [];
 
       for (const p of people) {
@@ -47,6 +47,18 @@ export const PeopleView: React.FC = () => {
       loadData();
     } catch (err: any) {
       toast.error('Failed to archive: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleUnarchive = async (e: React.MouseEvent, personId: string, name: string) => {
+    e.stopPropagation();
+
+    try {
+      await unarchivePerson(personId);
+      toast.success(`Restored ${name} to active contacts`);
+      loadData();
+    } catch (err: any) {
+      toast.error('Failed to restore: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -115,6 +127,16 @@ export const PeopleView: React.FC = () => {
           >
             I Owe Them
           </button>
+          <button
+            onClick={() => setFilterTab('ARCHIVED')}
+            className={`px-4 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+              filterTab === 'ARCHIVED'
+                ? 'bg-[#620032] text-white shadow-xs'
+                : 'text-[#574147] hover:bg-[#efe7e0]'
+            }`}
+          >
+            Archived
+          </button>
         </div>
 
         <div className="relative flex-1 min-w-[240px]">
@@ -168,13 +190,24 @@ export const PeopleView: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={(e) => handleArchive(e, s.person.id, s.person.name)}
-                      className="text-[#8a7077] hover:text-[#ba1a1a] p-1 rounded hover:bg-[#faf2ec] transition-colors"
-                      title="Archive person"
-                    >
-                      <span className="material-symbols-outlined text-lg">archive</span>
-                    </button>
+                    {filterTab === 'ARCHIVED' ? (
+                      <button
+                        onClick={(e) => handleUnarchive(e, s.person.id, s.person.name)}
+                        className="text-[#620032] hover:bg-[#ffd9e2] p-1.5 rounded transition-colors flex items-center gap-1 font-['JetBrains_Mono'] text-xs font-bold"
+                        title="Restore person"
+                      >
+                        <span className="material-symbols-outlined text-lg">unarchive</span>
+                        Restore
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => handleArchive(e, s.person.id, s.person.name)}
+                        className="text-[#8a7077] hover:text-[#ba1a1a] p-1 rounded hover:bg-[#faf2ec] transition-colors"
+                        title="Archive person"
+                      >
+                        <span className="material-symbols-outlined text-lg">archive</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Balance Stat Boxes */}
