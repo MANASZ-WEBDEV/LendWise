@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, recordRepaymentTransaction } from '../lib/supabase-queries';
+import { fetchPeople, fetchPersonSummary, recordRepaymentTransaction, archivePerson } from '../lib/supabase-queries';
 import { PersonSummary, DbBalance } from '../types';
 import { formatINR } from '../lib/currency';
 import { calculateRepaymentSplit } from '../lib/interest-engine';
@@ -100,11 +100,18 @@ export const RecordRepaymentView: React.FC = () => {
         notes,
       });
 
-      toast.success(`Repayment of ${formatINR(numAmount)} recorded!`);
-      if (summary) {
-        navigate(`/person/${summary.person.id}`);
-      } else {
+      // Check if this repayment fully settles the balance
+      if (split.totalRemaining <= 0 && summary) {
+        await archivePerson(summary.person.id);
+        toast.success(`🎉 Loan fully settled! ${summary.person.name} has been automatically moved to Archived contacts.`);
         navigate('/people');
+      } else {
+        toast.success(`Repayment of ${formatINR(numAmount)} recorded!`);
+        if (summary) {
+          navigate(`/person/${summary.person.id}`);
+        } else {
+          navigate('/people');
+        }
       }
     } catch (err: any) {
       toast.error('Failed to record repayment: ' + (err.message || 'Unknown error'));

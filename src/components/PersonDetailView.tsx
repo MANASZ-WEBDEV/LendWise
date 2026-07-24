@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, recordRateChange } from '../lib/supabase-queries';
+import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson } from '../lib/supabase-queries';
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
 import { toast } from 'sonner';
@@ -37,6 +37,19 @@ export const PersonDetailView: React.FC = () => {
       toast.error('Failed to load person detail: ' + (err.message || 'Unknown error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!summary) return;
+    if (!confirm(`Archive ${summary.person.name}? They will be moved to the Archived tab.`)) return;
+
+    try {
+      await archivePerson(summary.person.id);
+      toast.success(`${summary.person.name} archived successfully`);
+      navigate('/people');
+    } catch (err: any) {
+      toast.error('Failed to archive contact: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -137,6 +150,25 @@ export const PersonDetailView: React.FC = () => {
             <section key={balance.id} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Balance Hero Card */}
               <div className="lg:col-span-7 space-y-4">
+                {totalOwed === 0 && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between font-['JetBrains_Mono'] text-xs text-emerald-900 shadow-2xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-emerald-600 text-xl">verified</span>
+                      <div>
+                        <span className="font-bold block">Loan Fully Settled (₹0.00 Outstanding)</span>
+                        <span className="text-[11px] text-emerald-700">All principal & accrued interest paid off.</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleArchive}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">archive</span>
+                      Archive Contact
+                    </button>
+                  </div>
+                )}
+
                 <div className="p-6 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-widest font-bold text-[#620032]">
