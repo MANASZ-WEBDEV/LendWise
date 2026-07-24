@@ -1,20 +1,48 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# LendWise — Personal Loan & Interest Tracker
 
-# Run and deploy your AI Studio app
+A private ledger for tracking informal loans and computing daily simple interest automatically.
 
-This contains everything you need to run your app locally.
+## What It Does
 
-View your app in AI Studio: https://ai.studio/apps/1f642a4f-6223-4a4b-9067-b8d0cb0aefe5
+- Track money lent to and borrowed from friends/contacts
+- Automatic daily interest computation (monthly rate ÷ 30 × days elapsed)
+- Transparent "Explain the Math" view — every number is traceable
+- Interest-first repayment application — partial payments clear interest before principal
+- Full audit trail — immutable transaction history
+- Backdated entry support — onboard existing loans with correct historical interest
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+- **Frontend:** React 19 + TypeScript + Vite + TailwindCSS v4
+- **Backend:** Supabase (PostgreSQL + Auth + RLS)
+- **Design:** Murrey (deep wine) + Alabaster palette, Inter + JetBrains Mono typography
 
+## Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+# Install dependencies
+npm install
+
+# Copy env file and add your Supabase credentials
+cp .env.example .env
+
+# Start dev server
+npm run dev
+
+# Run tests
+npm test
+```
+
+## Interest Calculation
+
+Uses a 30/360-style daily convention:
+
+```
+daily_interest = principal × (monthly_rate / 100 / 30)
+```
+
+Interest accrues from the day after a loan is recorded. Rate changes apply forward only — historical interest is preserved.
+
+## License
+
+Private project.
