@@ -1,52 +1,80 @@
-import React, { useState } from 'react';
-import { Person, ViewMode } from '../types';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { fetchPeople, fetchPersonSummary, archivePerson } from '../lib/supabase-queries';
+import { PersonSummary } from '../types';
+import { formatINR } from '../lib/currency';
+import { AddPersonModal } from './AddPersonModal';
+import { toast } from 'sonner';
 
-interface PeopleViewProps {
-  people: Person[];
-  onSelectPerson: (person: Person) => void;
-  onOpenAddModal: () => void;
-  searchQuery: string;
-}
-
-export const PeopleView: React.FC<PeopleViewProps> = ({
-  people,
-  onSelectPerson,
-  onOpenAddModal,
-  searchQuery: initialSearch,
-}) => {
+export const PeopleView: React.FC = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<PersonSummary[]>([]);
+  const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<'ALL' | 'OWES_ME' | 'I_OWE_THEM'>('ALL');
-  const [localSearch, setLocalSearch] = useState(initialSearch);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredPeople = people.filter((p) => {
-    // Relationship tab filter
-    if (filterTab === 'OWES_ME' && p.relationship !== 'OWES_ME') return false;
-    if (filterTab === 'I_OWE_THEM' && p.relationship !== 'I_OWE_THEM') return false;
+  useEffect(() => {
+    loadData();
+  }, []);
 
-    // Search query filter
-    const query = localSearch.toLowerCase();
-    if (!query) return true;
-    return (
-      p.name.toLowerCase().includes(query) ||
-      p.id.toLowerCase().includes(query) ||
-      p.company.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query)
-    );
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const people = await fetchPeople();
+      const loaded: PersonSummary[] = [];
+
+      for (const p of people) {
+        const s = await fetchPersonSummary(p);
+        loaded.push(s);
+      }
+
+      setSummaries(loaded);
+    } catch (err: any) {
+      toast.error('Failed to load contacts: ' + (err.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleArchive = async (e: React.MouseEvent, personId: string, name: string) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to archive ${name}?`)) return;
+
+    try {
+      await archivePerson(personId);
+      toast.success(`Archived ${name}`);
+      loadData();
+    } catch (err: any) {
+      toast.error('Failed to archive: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const filteredSummaries = summaries.filter(s => {
+    const nameMatch = s.person.name.toLowerCase().includes(search.toLowerCase());
+    const notesMatch = (s.person.notes || '').toLowerCase().includes(search.toLowerCase());
+    if (!nameMatch && !notesMatch) return false;
+
+    if (filterTab === 'OWES_ME' && s.totalLentTotal <= 0) return false;
+    if (filterTab === 'I_OWE_THEM' && s.totalBorrowedTotal <= 0) return false;
+
+    return true;
   });
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12 font-['Inter']">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#620032] font-['Inter'] tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#620032] tracking-tight">
             People Directory
           </h1>
-          <p className="text-[#574147] text-base mt-1">
-            Manage and track all private lending relationships across your ledger.
+          <p className="text-[#574147] text-sm mt-1">
+            Manage contacts and track lending relationships across your private ledger.
           </p>
         </div>
         <button
-          onClick={onOpenAddModal}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center justify-center gap-2 bg-[#8b004a] text-white px-6 py-3 rounded-lg font-['JetBrains_Mono'] text-sm font-bold hover:bg-[#620032] transition-all active:scale-95 shadow-md self-start sm:self-auto"
         >
           <span className="material-symbols-outlined text-lg">person_add</span>
@@ -54,7 +82,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         </button>
       </div>
 
-      {/* Filters & Search Bar */}
+      {/* Filter & Search Bar */}
       <div className="flex flex-wrap items-center gap-4 p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
         <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs">
           <button
@@ -89,131 +117,153 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           </button>
         </div>
 
-        <div className="h-6 w-px bg-[#ddbfc6] hidden md:block mx-1"></div>
-
         <div className="relative flex-1 min-w-[240px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#574147] text-lg">
             search
           </span>
           <input
             type="text"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Search by name, company, category, or ID..."
-            className="w-full bg-white border border-[#ddbfc6] rounded-lg pl-9 pr-4 py-2 focus:ring-2 focus:ring-[#620032]/20 focus:border-[#620032] outline-none transition-all text-sm font-['Inter']"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or notes..."
+            className="w-full bg-white border border-[#ddbfc6] rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-1 focus:ring-[#620032] outline-none"
           />
         </div>
       </div>
 
-      {/* Bento Grid of People */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPeople.map((person) => (
-          <div
-            key={person.id}
-            onClick={() => onSelectPerson(person)}
-            className="bg-[#ffffff] border border-[#ddbfc6] p-6 rounded-xl hover:border-[#620032]/60 transition-all cursor-pointer group flex flex-col justify-between shadow-2xs hover:shadow-md"
-          >
-            <div>
-              {/* Card Top Header */}
-              <div className="flex justify-between items-start mb-5">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-14 h-14 rounded-full border border-[#ddbfc6] overflow-hidden flex-shrink-0">
-                    <img
-                      src={person.avatar}
-                      alt={person.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-[#1e1b17] group-hover:text-[#620032] transition-colors leading-tight">
-                      {person.name}
-                    </h3>
-                    <p className="text-xs text-[#574147] font-['JetBrains_Mono'] mt-0.5">
-                      ID: {person.id}
-                    </p>
-                    <p className="text-[11px] text-[#8a7077] truncate max-w-[150px]">{person.company}</p>
-                  </div>
-                </div>
-
-                <span
-                  className={`text-[10px] font-bold font-['JetBrains_Mono'] px-2 py-0.5 rounded uppercase tracking-wider ${
-                    person.relationship === 'OWES_ME'
-                      ? 'bg-[#ffd9e2] text-[#620032]'
-                      : 'bg-[#e5e2da] text-[#5f5e58]'
-                  }`}
-                >
-                  {person.relationship === 'OWES_ME' ? 'Owes Me' : 'I Owe'}
-                </span>
-              </div>
-
-              {/* Stats Box */}
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="p-3 bg-[#faf2ec] rounded-lg border border-[#ddbfc6]/40">
-                  <span className="text-[10px] font-bold font-['JetBrains_Mono'] text-[#574147] uppercase block mb-0.5">
-                    Principal
-                  </span>
-                  <span className="font-['JetBrains_Mono'] text-base font-bold text-[#1e1b17]">
-                    ${person.principal.toLocaleString()}
-                  </span>
-                </div>
-                <div className="p-3 bg-[#faf2ec] rounded-lg border border-[#ddbfc6]/40">
-                  <span className="text-[10px] font-bold font-['JetBrains_Mono'] text-[#574147] uppercase block mb-0.5">
-                    Interest
-                  </span>
-                  <span className="font-['JetBrains_Mono'] text-base font-bold text-[#620032]">
-                    ${person.liveAccrual.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Repayment History Sparkline Bar Footer */}
-            <div className="flex items-end justify-between border-t border-[#ddbfc6]/50 pt-4 mt-2">
-              <div>
-                <span className="text-[10px] font-bold font-['JetBrains_Mono'] text-[#574147] uppercase block mb-1.5">
-                  Repayment History
-                </span>
-                <div className="h-8 flex items-end gap-1">
-                  {person.repaymentHistory.map((h, i) => (
-                    <div
-                      key={i}
-                      className={`w-2 rounded-t-xs transition-all ${
-                        person.relationship === 'OWES_ME'
-                          ? i === person.repaymentHistory.length - 1
-                            ? 'bg-[#620032]'
-                            : 'bg-[#ffb0c9]'
-                          : i === person.repaymentHistory.length - 1
-                          ? 'bg-[#5f5e58]'
-                          : 'bg-[#c9c6bf]'
-                      }`}
-                      style={{ height: `${Math.max(15, h)}%` }}
-                      title={`Period ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <button className="w-9 h-9 rounded-full flex items-center justify-center border border-[#ddbfc6] text-[#574147] group-hover:bg-[#620032] group-hover:text-white group-hover:border-[#620032] transition-all">
-                <span className="material-symbols-outlined text-lg">chevron_right</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {/* Add New Entity Card */}
-        <div
-          onClick={onOpenAddModal}
-          className="bg-[#faf2ec]/50 border-2 border-dashed border-[#ddbfc6] p-6 rounded-xl flex flex-col items-center justify-center text-center hover:bg-[#faf2ec] hover:border-[#620032] transition-all cursor-pointer group py-12 min-h-[260px]"
-        >
-          <div className="w-14 h-14 rounded-full bg-[#fff8f3] border border-[#ddbfc6] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-2xs">
-            <span className="material-symbols-outlined text-[#620032] text-2xl">add</span>
-          </div>
-          <h3 className="font-bold text-[#1e1b17] text-lg mb-1">Add New Entity</h3>
-          <p className="text-xs text-[#574147] max-w-[200px] font-['JetBrains_Mono']">
-            Register a new borrower or lender to your private ledger.
-          </p>
+      {loading ? (
+        <div className="py-20 text-center">
+          <div className="inline-block w-8 h-8 border-4 border-[#620032] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-3 text-xs font-['JetBrains_Mono'] text-[#574147]">Loading contacts...</p>
         </div>
-      </div>
+      ) : (
+        /* Bento Grid of People Cards */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSummaries.map((s) => {
+            const lentBal = s.balances.find(b => b.balance.direction === 'lent');
+            const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
+
+            return (
+              <div
+                key={s.person.id}
+                onClick={() => navigate(`/person/${s.person.id}`)}
+                className="bg-[#ffffff] border border-[#ddbfc6] p-6 rounded-xl hover:border-[#620032]/60 transition-all cursor-pointer group flex flex-col justify-between shadow-2xs hover:shadow-md relative"
+              >
+                <div>
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-base font-bold shadow-xs">
+                        {s.person.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-[#1e1b17] group-hover:text-[#620032] transition-colors leading-tight">
+                          {s.person.name}
+                        </h3>
+                        {s.person.notes && (
+                          <p className="text-xs text-[#574147] line-clamp-1 mt-0.5 font-['Inter']">
+                            {s.person.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => handleArchive(e, s.person.id, s.person.name)}
+                      className="text-[#8a7077] hover:text-[#ba1a1a] p-1 rounded hover:bg-[#faf2ec] transition-colors"
+                      title="Archive person"
+                    >
+                      <span className="material-symbols-outlined text-lg">archive</span>
+                    </button>
+                  </div>
+
+                  {/* Balance Stat Boxes */}
+                  <div className="space-y-2 mt-4 font-['JetBrains_Mono'] text-xs">
+                    {lentBal && (
+                      <div className="p-3 bg-[#faf2ec] rounded-lg border border-[#ddbfc6]/40 flex justify-between items-center">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#620032] uppercase block">
+                            THEY OWE YOU
+                          </span>
+                          <span className="text-xs text-[#574147]">
+                            Rate: {lentBal.balance.current_rate}%/mo
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-sm text-[#1e1b17] block">
+                            {formatINR(lentBal.totalOwed)}
+                          </span>
+                          <span className="text-[11px] text-[#620032]">
+                            (Accrued: {formatINR(lentBal.liveAccruedInterest)})
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {borrowedBal && (
+                      <div className="p-3 bg-[#e5e2da] rounded-lg border border-[#ddbfc6]/40 flex justify-between items-center">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#5f5e58] uppercase block">
+                            YOU OWE THEM
+                          </span>
+                          <span className="text-xs text-[#574147]">
+                            Rate: {borrowedBal.balance.current_rate}%/mo
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-sm text-[#1e1b17] block">
+                            {formatINR(borrowedBal.totalOwed)}
+                          </span>
+                          <span className="text-[11px] text-[#5f5e58]">
+                            (Accrued: {formatINR(borrowedBal.liveAccruedInterest)})
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {!lentBal && !borrowedBal && (
+                      <div className="p-3 bg-[#faf2ec] rounded-lg border border-dashed border-[#ddbfc6] text-center text-[#574147]">
+                        No active loan balance
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="flex items-center justify-between border-t border-[#ddbfc6]/50 pt-4 mt-4">
+                  <span className="text-[11px] font-['JetBrains_Mono'] text-[#574147]">
+                    Click to view history & details
+                  </span>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center border border-[#ddbfc6] text-[#574147] group-hover:bg-[#620032] group-hover:text-white group-hover:border-[#620032] transition-all">
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Add New Entity Card */}
+          <div
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#faf2ec]/50 border-2 border-dashed border-[#ddbfc6] p-6 rounded-xl flex flex-col items-center justify-center text-center hover:bg-[#faf2ec] hover:border-[#620032] transition-all cursor-pointer group py-12 min-h-[220px]"
+          >
+            <div className="w-12 h-12 rounded-full bg-[#fff8f3] border border-[#ddbfc6] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-2xs">
+              <span className="material-symbols-outlined text-[#620032] text-2xl">add</span>
+            </div>
+            <h3 className="font-bold text-[#1e1b17] text-base mb-1">Add New Person</h3>
+            <p className="text-xs text-[#574147] max-w-[200px] font-['JetBrains_Mono']">
+              Register a contact to track loans and interest.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Add Person Modal */}
+      <AddPersonModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onPersonAdded={loadData}
+      />
     </div>
   );
 };
