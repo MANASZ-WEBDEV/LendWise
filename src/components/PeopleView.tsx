@@ -95,7 +95,7 @@ export const PeopleView: React.FC = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
         <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0 no-scrollbar">
           <button
             onClick={() => setFilterTab('ALL')}
@@ -139,7 +139,7 @@ export const PeopleView: React.FC = () => {
           </button>
         </div>
 
-        <div className="relative w-full sm:w-auto sm:min-w-[240px]">
+        <div className="relative w-full lg:w-72">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#574147] text-lg">
             search
           </span>
@@ -148,7 +148,7 @@ export const PeopleView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or notes..."
-            className="w-full bg-white border border-[#ddbfc6] rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-1 focus:ring-[#620032] outline-none"
+            className="w-full bg-white border border-[#ddbfc6] rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-1 focus:ring-[#620032] outline-none font-['Inter']"
           />
         </div>
       </div>
