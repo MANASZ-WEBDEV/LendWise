@@ -69,10 +69,10 @@ export const Header: React.FC<HeaderProps> = ({ userEmail }) => {
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link
           to="/disburse"
-          className="bg-[#8b004a] text-white px-4 h-9 rounded-lg font-['JetBrains_Mono'] text-xs font-semibold transition-all hover:bg-[#620032] active:scale-95 shadow-sm flex items-center gap-1.5"
+          className="hidden sm:flex bg-[#8b004a] text-white px-3.5 sm:px-4 h-9 rounded-lg font-['JetBrains_Mono'] text-xs font-semibold transition-all hover:bg-[#620032] active:scale-95 shadow-sm items-center gap-1.5"
         >
           <span className="material-symbols-outlined text-base">add</span>
           New Loan

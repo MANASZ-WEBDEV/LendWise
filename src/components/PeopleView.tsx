@@ -95,11 +95,11 @@ export const PeopleView: React.FC = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
-        <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
+        <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0">
           <button
             onClick={() => setFilterTab('ALL')}
-            className={`px-4 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               filterTab === 'ALL'
                 ? 'bg-[#620032] text-white shadow-xs'
                 : 'text-[#574147] hover:bg-[#efe7e0]'
@@ -109,7 +109,7 @@ export const PeopleView: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterTab('OWES_ME')}
-            className={`px-4 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               filterTab === 'OWES_ME'
                 ? 'bg-[#620032] text-white shadow-xs'
                 : 'text-[#574147] hover:bg-[#efe7e0]'
@@ -119,7 +119,7 @@ export const PeopleView: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterTab('I_OWE_THEM')}
-            className={`px-4 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               filterTab === 'I_OWE_THEM'
                 ? 'bg-[#620032] text-white shadow-xs'
                 : 'text-[#574147] hover:bg-[#efe7e0]'
@@ -129,7 +129,7 @@ export const PeopleView: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterTab('ARCHIVED')}
-            className={`px-4 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               filterTab === 'ARCHIVED'
                 ? 'bg-[#620032] text-white shadow-xs'
                 : 'text-[#574147] hover:bg-[#efe7e0]'
@@ -139,7 +139,7 @@ export const PeopleView: React.FC = () => {
           </button>
         </div>
 
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative w-full sm:w-auto sm:min-w-[240px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#574147] text-lg">
             search
           </span>

@@ -105,11 +105,11 @@ export const TransactionsView: React.FC = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6] flex flex-wrap items-center justify-between gap-4">
-        <div className="flex bg-white/80 p-1 rounded-lg border border-[#ddbfc6] shadow-2xs">
+      <div className="p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex bg-white/80 p-1 rounded-lg border border-[#ddbfc6] shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0">
           <button
             onClick={() => setTypeFilter('ALL')}
-            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               typeFilter === 'ALL' ? 'bg-[#620032] text-white shadow-xs' : 'text-[#574147] hover:bg-[#efe7e0]'
             }`}
           >
@@ -117,7 +117,7 @@ export const TransactionsView: React.FC = () => {
           </button>
           <button
             onClick={() => setTypeFilter('loan')}
-            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               typeFilter === 'loan' ? 'bg-[#620032] text-white shadow-xs' : 'text-[#574147] hover:bg-[#efe7e0]'
             }`}
           >
@@ -125,7 +125,7 @@ export const TransactionsView: React.FC = () => {
           </button>
           <button
             onClick={() => setTypeFilter('repayment')}
-            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               typeFilter === 'repayment' ? 'bg-[#620032] text-white shadow-xs' : 'text-[#574147] hover:bg-[#efe7e0]'
             }`}
           >
@@ -133,7 +133,7 @@ export const TransactionsView: React.FC = () => {
           </button>
           <button
             onClick={() => setTypeFilter('rate_change')}
-            className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${
               typeFilter === 'rate_change' ? 'bg-[#620032] text-white shadow-xs' : 'text-[#574147] hover:bg-[#efe7e0]'
             }`}
           >
@@ -141,7 +141,7 @@ export const TransactionsView: React.FC = () => {
           </button>
         </div>
 
-        <div className="relative min-w-[220px]">
+        <div className="relative w-full sm:w-auto sm:min-w-[220px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#574147] text-base">
             search
           </span>
@@ -161,81 +161,137 @@ export const TransactionsView: React.FC = () => {
           <p className="mt-3 text-xs font-['JetBrains_Mono'] text-[#574147]">Loading audit history...</p>
         </div>
       ) : (
-        /* Main Table */
-        <div className="bg-[#ffffff] border border-[#ddbfc6] rounded-xl overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#efe7e0] border-b border-[#ddbfc6]">
-                  <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
-                    Breakdown / Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#ddbfc6] text-sm">
-                {filteredTxns.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-xs font-['JetBrains_Mono'] text-[#574147]">
-                      No audit records found.
-                    </td>
+        <>
+          {/* Mobile Card List View (Visible < 640px) */}
+          <div className="block sm:hidden space-y-3">
+            {filteredTxns.length === 0 ? (
+              <div className="p-8 bg-white border border-[#ddbfc6] rounded-xl text-center text-xs font-['JetBrains_Mono'] text-[#574147]">
+                No audit records found.
+              </div>
+            ) : (
+              filteredTxns.map((t) => (
+                <div key={t.id} className="p-4 bg-white border border-[#ddbfc6] rounded-xl space-y-2 font-['Inter'] shadow-2xs">
+                  <div className="flex justify-between items-start gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-['JetBrains_Mono'] text-[11px] font-bold ${
+                        t.type === 'repayment'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : t.type === 'loan'
+                          ? 'bg-[#ffd9e2] text-[#8d034b]'
+                          : 'bg-[#e5e2da] text-[#5f5e58]'
+                      }`}
+                    >
+                      {t.type === 'loan'
+                        ? 'Loan Disbursement'
+                        : t.type === 'repayment'
+                        ? 'Repayment'
+                        : `Rate Change (${t.new_rate}%/mo)`}
+                    </span>
+                    <span className="font-['JetBrains_Mono'] text-xs text-[#574147] font-semibold">
+                      {t.date}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="font-bold text-[#1e1b17] text-base">{t.contactName}</span>
+                    <span className="font-['JetBrains_Mono'] text-base font-bold text-[#1e1b17]">
+                      {t.amount ? formatINR(t.amount) : '—'}
+                    </span>
+                  </div>
+
+                  {t.type === 'repayment' && (
+                    <div className="pt-2 border-t border-[#ddbfc6]/40 text-xs font-['JetBrains_Mono'] text-[#574147] flex justify-between">
+                      <span>Interest: <strong className="text-[#620032]">{formatINR(t.interest_applied)}</strong></span>
+                      <span>Principal: <strong>{formatINR(t.principal_applied)}</strong></span>
+                    </div>
+                  )}
+
+                  {t.notes && (
+                    <p className="text-xs text-[#574147] italic pt-1">
+                      {t.notes}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View (Visible >= 640px) */}
+          <div className="hidden sm:block bg-[#ffffff] border border-[#ddbfc6] rounded-xl overflow-hidden shadow-2xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#efe7e0] border-b border-[#ddbfc6]">
+                    <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
+                      Breakdown / Notes
+                    </th>
                   </tr>
-                ) : (
-                  filteredTxns.map((t) => (
-                    <tr key={t.id} className="hover:bg-[#faf2ec] transition-colors font-['Inter']">
-                      <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs text-[#1e1b17]">
-                        {t.date}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-['JetBrains_Mono'] text-xs font-bold ${
-                            t.type === 'repayment'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : t.type === 'loan'
-                              ? 'bg-[#ffd9e2] text-[#8d034b]'
-                              : 'bg-[#e5e2da] text-[#5f5e58]'
-                          }`}
-                        >
-                          {t.type === 'loan'
-                            ? 'Loan Disbursement'
-                            : t.type === 'repayment'
-                            ? 'Repayment'
-                            : `Rate Change (${t.new_rate}%/mo)`}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-bold text-[#1e1b17]">{t.contactName}</td>
-                      <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs font-bold text-[#1e1b17]">
-                        {t.amount ? formatINR(t.amount) : '—'}
-                      </td>
-                      <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs text-[#574147]">
-                        {t.type === 'repayment' ? (
-                          <span>
-                            Interest: <strong className="text-[#620032]">{formatINR(t.interest_applied)}</strong> | Principal: {formatINR(t.principal_applied)}
-                          </span>
-                        ) : t.notes ? (
-                          t.notes
-                        ) : (
-                          '—'
-                        )}
+                </thead>
+                <tbody className="divide-y divide-[#ddbfc6] text-sm">
+                  {filteredTxns.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-xs font-['JetBrains_Mono'] text-[#574147]">
+                        No audit records found.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    filteredTxns.map((t) => (
+                      <tr key={t.id} className="hover:bg-[#faf2ec] transition-colors font-['Inter']">
+                        <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs text-[#1e1b17]">
+                          {t.date}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-['JetBrains_Mono'] text-xs font-bold ${
+                              t.type === 'repayment'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : t.type === 'loan'
+                                ? 'bg-[#ffd9e2] text-[#8d034b]'
+                                : 'bg-[#e5e2da] text-[#5f5e58]'
+                            }`}
+                          >
+                            {t.type === 'loan'
+                              ? 'Loan Disbursement'
+                              : t.type === 'repayment'
+                              ? 'Repayment'
+                              : `Rate Change (${t.new_rate}%/mo)`}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-bold text-[#1e1b17]">{t.contactName}</td>
+                        <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs font-bold text-[#1e1b17]">
+                          {t.amount ? formatINR(t.amount) : '—'}
+                        </td>
+                        <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs text-[#574147]">
+                          {t.type === 'repayment' ? (
+                            <span>
+                              Interest: <strong className="text-[#620032]">{formatINR(t.interest_applied)}</strong> | Principal: {formatINR(t.principal_applied)}
+                            </span>
+                          ) : t.notes ? (
+                            t.notes
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

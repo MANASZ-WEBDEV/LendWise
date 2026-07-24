@@ -156,72 +156,113 @@ export const DashboardView: React.FC = () => {
                 </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead className="bg-[#faf2ec]">
-                    <tr>
-                      <th className="text-left px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
-                        Contact
-                      </th>
-                      <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
-                        Principal
-                      </th>
-                      <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
-                        Live Accrued Interest
-                      </th>
-                      <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
-                        Total Owed
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ddbfc6]">
-                    {summaries.map((s) => {
-                      const lentBal = s.balances.find(b => b.balance.direction === 'lent');
-                      const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
-                      const primaryBal = lentBal || borrowedBal;
+              <>
+                {/* Mobile Card View (Visible < 640px) */}
+                <div className="block sm:hidden divide-y divide-[#ddbfc6]">
+                  {summaries.map((s) => {
+                    const lentBal = s.balances.find(b => b.balance.direction === 'lent');
+                    const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
 
-                      const principal = (lentBal?.balance.principal || 0) - (borrowedBal?.balance.principal || 0);
-                      const accrued = (lentBal?.liveAccruedInterest || 0) - (borrowedBal?.liveAccruedInterest || 0);
-                      const total = principal + accrued;
+                    const principal = (lentBal?.balance.principal || 0) - (borrowedBal?.balance.principal || 0);
+                    const accrued = (lentBal?.liveAccruedInterest || 0) - (borrowedBal?.liveAccruedInterest || 0);
+                    const total = principal + accrued;
 
-                      return (
-                        <tr
-                          key={s.person.id}
-                          onClick={() => navigate(`/person/${s.person.id}`)}
-                          className="hover:bg-[#faf2ec] cursor-pointer transition-colors group"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-xs font-bold">
-                                {s.person.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-bold text-[#1e1b17] text-sm group-hover:text-[#620032] transition-colors">
-                                  {s.person.name}
-                                </span>
-                                {s.person.notes && (
-                                  <span className="text-xs text-[#574147] truncate max-w-[200px]">
-                                    {s.person.notes}
-                                  </span>
-                                )}
-                              </div>
+                    return (
+                      <div
+                        key={s.person.id}
+                        onClick={() => navigate(`/person/${s.person.id}`)}
+                        className="p-4 hover:bg-[#faf2ec] cursor-pointer transition-colors space-y-2 font-['Inter']"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-xs font-bold">
+                              {s.person.name.charAt(0).toUpperCase()}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm text-[#1e1b17]">
-                            {formatINR(principal)}
-                          </td>
-                          <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm font-semibold text-[#620032]">
-                            {formatINR(accrued)}
-                          </td>
-                          <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm font-bold text-[#8b004a]">
+                            <span className="font-bold text-[#1e1b17] text-sm">
+                              {s.person.name}
+                            </span>
+                          </div>
+                          <span className="font-['JetBrains_Mono'] text-sm font-bold text-[#8b004a]">
                             {formatINR(total)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-xs font-['JetBrains_Mono'] text-[#574147] pt-1">
+                          <span>Principal: {formatINR(principal)}</span>
+                          <span className="text-[#620032] font-semibold">Interest: {formatINR(accrued)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table View (Visible >= 640px) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-[#faf2ec]">
+                      <tr>
+                        <th className="text-left px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
+                          Contact
+                        </th>
+                        <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
+                          Principal
+                        </th>
+                        <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
+                          Live Accrued Interest
+                        </th>
+                        <th className="text-right px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-tight">
+                          Total Owed
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#ddbfc6]">
+                      {summaries.map((s) => {
+                        const lentBal = s.balances.find(b => b.balance.direction === 'lent');
+                        const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
+
+                        const principal = (lentBal?.balance.principal || 0) - (borrowedBal?.balance.principal || 0);
+                        const accrued = (lentBal?.liveAccruedInterest || 0) - (borrowedBal?.liveAccruedInterest || 0);
+                        const total = principal + accrued;
+
+                        return (
+                          <tr
+                            key={s.person.id}
+                            onClick={() => navigate(`/person/${s.person.id}`)}
+                            className="hover:bg-[#faf2ec] cursor-pointer transition-colors group"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-xs font-bold">
+                                  {s.person.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-[#1e1b17] text-sm group-hover:text-[#620032] transition-colors">
+                                    {s.person.name}
+                                  </span>
+                                  {s.person.notes && (
+                                    <span className="text-xs text-[#574147] truncate max-w-[200px]">
+                                      {s.person.notes}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm text-[#1e1b17]">
+                              {formatINR(principal)}
+                            </td>
+                            <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm font-semibold text-[#620032]">
+                              {formatINR(accrued)}
+                            </td>
+                            <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-sm font-bold text-[#8b004a]">
+                              {formatINR(total)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </>
