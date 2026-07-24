@@ -130,16 +130,16 @@ export const RecordRepaymentView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 space-y-8 font-['Inter'] pb-12">
+    <div className="max-w-7xl mx-auto py-2 sm:py-6 space-y-6 sm:space-y-8 font-['Inter'] pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-[#8b004a]">Record Repayment</h1>
-        <p className="text-[#574147] text-sm mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#8b004a] tracking-tight">Record Repayment</h1>
+        <p className="text-[#574147] text-xs sm:text-sm mt-1">
           Payments are automatically applied to interest first, then to principal.
         </p>
       </div>
 
       {!summary || summary.balances.length === 0 ? (
-        <div className="p-8 bg-[#fff8f3] border border-dashed border-[#ddbfc6] rounded-xl text-center">
+        <div className="p-6 sm:p-8 bg-[#fff8f3] border border-dashed border-[#ddbfc6] rounded-xl text-center">
           <p className="text-sm font-['JetBrains_Mono'] text-[#574147] mb-4">
             No balance found for repayment.
           </p>
@@ -151,12 +151,12 @@ export const RecordRepaymentView: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Form */}
           <div className="lg:col-span-7">
             <form onSubmit={handleSubmit} className="bg-white border border-[#ddbfc6] rounded-xl overflow-hidden shadow-2xs">
-              <div className="p-6 border-b border-[#ddbfc6] bg-[#fff8f3]">
-                <h2 className="text-lg font-bold text-[#1e1b17] flex items-center gap-2">
+              <div className="p-4 sm:p-6 border-b border-[#ddbfc6] bg-[#fff8f3]">
+                <h2 className="text-base sm:text-lg font-bold text-[#1e1b17] flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#620032]">payments</span>
                   Repayment for {summary.person.name}
                 </h2>

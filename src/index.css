@@ -71,3 +71,13 @@
 .zebra-table tr:nth-child(even) {
   background-color: rgba(244, 236, 230, 0.4);
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

@@ -76,27 +76,27 @@ export const PeopleView: React.FC = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12 font-['Inter']">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#620032] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-bold text-[#620032] tracking-tight">
             People Directory
           </h1>
-          <p className="text-[#574147] text-sm mt-1">
+          <p className="text-[#574147] text-xs sm:text-sm mt-1">
             Manage contacts and track lending relationships across your private ledger.
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#8b004a] text-white px-6 py-3 rounded-lg font-['JetBrains_Mono'] text-sm font-bold hover:bg-[#620032] transition-all active:scale-95 shadow-md self-start sm:self-auto"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#8b004a] text-white px-5 py-2.5 sm:py-3 rounded-lg font-['JetBrains_Mono'] text-xs sm:text-sm font-bold hover:bg-[#620032] transition-all active:scale-95 shadow-md"
         >
-          <span className="material-symbols-outlined text-lg">person_add</span>
+          <span className="material-symbols-outlined text-base sm:text-lg">person_add</span>
           Add Person
         </button>
       </div>
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6]">
-        <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0">
+        <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0 no-scrollbar">
           <button
             onClick={() => setFilterTab('ALL')}
             className={`px-3.5 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${

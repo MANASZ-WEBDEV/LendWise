@@ -94,16 +94,16 @@ export const DisburseLoanView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 font-['Inter'] space-y-6">
+    <div className="max-w-4xl mx-auto py-2 sm:py-6 font-['Inter'] space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#620032]">Disburse / Add Loan</h1>
-        <p className="text-sm text-[#574147] mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] tracking-tight">Disburse / Add Loan</h1>
+        <p className="text-xs sm:text-sm text-[#574147] mt-1">
           Record a new loan disbursement or onboard an existing informal loan.
         </p>
       </div>
 
       {people.length === 0 ? (
-        <div className="p-8 bg-[#fff8f3] border border-dashed border-[#ddbfc6] rounded-xl text-center">
+        <div className="p-6 sm:p-8 bg-[#fff8f3] border border-dashed border-[#ddbfc6] rounded-xl text-center">
           <p className="text-sm font-['JetBrains_Mono'] text-[#574147] mb-4">
             You must add a contact before disbursing a loan.
           </p>
@@ -115,7 +115,7 @@ export const DisburseLoanView: React.FC = () => {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="bg-white border border-[#ddbfc6] rounded-xl p-6 shadow-2xs space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white border border-[#ddbfc6] rounded-xl p-4 sm:p-6 shadow-2xs space-y-5 sm:space-y-6">
           {/* Person Selection */}
           <div className="space-y-1.5">
             <label className="block font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">

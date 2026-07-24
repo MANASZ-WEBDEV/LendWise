@@ -52,18 +52,18 @@ export const DashboardView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-['Inter']">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#1e1b17] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-bold text-[#1e1b17] tracking-tight">
             Dashboard
           </h1>
-          <p className="text-[#574147] text-sm mt-1">
+          <p className="text-[#574147] text-xs sm:text-sm mt-1">
             Financial ledger overview & live accruing interest
           </p>
         </div>
         <Link
           to="/disburse"
-          className="bg-[#8b004a] text-white px-5 py-2.5 rounded-lg font-['JetBrains_Mono'] text-xs font-bold hover:bg-[#620032] transition-all active:scale-95 shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
+          className="w-full sm:w-auto bg-[#8b004a] text-white px-5 py-2.5 rounded-lg font-['JetBrains_Mono'] text-xs font-bold hover:bg-[#620032] transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5"
         >
           <span className="material-symbols-outlined text-base">send_money</span>
           Disburse New Loan

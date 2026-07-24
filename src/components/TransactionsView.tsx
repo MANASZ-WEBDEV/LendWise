@@ -87,17 +87,17 @@ export const TransactionsView: React.FC = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12 font-['Inter']">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#620032]">Master Ledger Audit Trail</h1>
-          <p className="text-[#574147] text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] tracking-tight">Master Ledger Audit Trail</h1>
+          <p className="text-[#574147] text-xs sm:text-sm mt-1">
             Complete chronological audit trail of disbursements, repayments, and rate changes.
           </p>
         </div>
 
         <button
           onClick={exportCSV}
-          className="px-4 py-2 bg-[#fff8f3] border border-[#ddbfc6] text-[#620032] font-['JetBrains_Mono'] font-bold text-xs rounded-lg hover:bg-[#ffd9e2] transition-colors flex items-center gap-1.5 shadow-2xs self-start sm:self-auto"
+          className="w-full sm:w-auto px-4 py-2 bg-[#fff8f3] border border-[#ddbfc6] text-[#620032] font-['JetBrains_Mono'] font-bold text-xs rounded-lg hover:bg-[#ffd9e2] transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
         >
           <span className="material-symbols-outlined text-base">download</span>
           Export CSV
@@ -105,8 +105,8 @@ export const TransactionsView: React.FC = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex bg-white/80 p-1 rounded-lg border border-[#ddbfc6] shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0">
+      <div className="p-2.5 sm:p-4 bg-[#f4ece6] rounded-xl border border-[#ddbfc6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex bg-white/80 p-1 rounded-lg border border-[#ddbfc6] shadow-2xs overflow-x-auto max-w-full flex-nowrap shrink-0 no-scrollbar">
           <button
             onClick={() => setTypeFilter('ALL')}
             className={`px-3 py-1.5 rounded-md font-['JetBrains_Mono'] text-xs font-semibold whitespace-nowrap transition-all ${

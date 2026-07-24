@@ -99,12 +99,12 @@ export const PersonDetailView: React.FC = () => {
       </div>
 
       {/* Person Header */}
-      <div className="flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-2xl font-bold shadow-xs">
+      <div className="flex items-center gap-4 sm:gap-5">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-xl sm:text-2xl font-bold shadow-xs shrink-0">
           {summary.person.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-[#620032] leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] leading-tight">
             {summary.person.name}
           </h1>
           {summary.person.notes && (
@@ -151,7 +151,7 @@ export const PersonDetailView: React.FC = () => {
               {/* Left Column: Balance Hero Card */}
               <div className="lg:col-span-7 space-y-4">
                 {totalOwed === 0 && (
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between font-['JetBrains_Mono'] text-xs text-emerald-900 shadow-2xs">
+                  <div className="p-3.5 sm:p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-['JetBrains_Mono'] text-xs text-emerald-900 shadow-2xs">
                     <div className="flex items-center gap-2.5">
                       <span className="material-symbols-outlined text-emerald-600 text-xl">verified</span>
                       <div>
@@ -161,7 +161,7 @@ export const PersonDetailView: React.FC = () => {
                     </div>
                     <button
                       onClick={handleArchive}
-                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg transition-colors flex items-center gap-1"
+                      className="w-full sm:w-auto justify-center px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg transition-colors flex items-center gap-1"
                     >
                       <span className="material-symbols-outlined text-sm">archive</span>
                       Archive Contact
@@ -169,8 +169,8 @@ export const PersonDetailView: React.FC = () => {
                   </div>
                 )}
 
-                <div className="p-6 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
-                  <div className="flex justify-between items-center mb-2">
+                <div className="p-4 sm:p-6 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                     <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-widest font-bold text-[#620032]">
                       {balance.direction === 'lent' ? 'They Owe You (Lent)' : 'You Owe Them (Borrowed)'}
                     </span>
@@ -179,30 +179,30 @@ export const PersonDetailView: React.FC = () => {
                         setRateModalBalanceId(balance.id);
                         setNewRate(String(balance.current_rate));
                       }}
-                      className="px-2.5 py-1 bg-[#fff8f3] border border-[#ddbfc6] text-[#620032] font-['JetBrains_Mono'] text-xs font-bold rounded hover:bg-[#ffd9e2] transition-colors"
+                      className="self-start sm:self-auto px-2.5 py-1 bg-[#fff8f3] border border-[#ddbfc6] text-[#620032] font-['JetBrains_Mono'] text-xs font-bold rounded hover:bg-[#ffd9e2] transition-colors"
                     >
                       Change Rate ({balance.current_rate}%/mo)
                     </button>
                   </div>
 
-                  <div className="font-['JetBrains_Mono'] text-4xl font-bold text-[#620032] tracking-tight mt-3">
+                  <div className="font-['JetBrains_Mono'] text-3xl sm:text-4xl font-bold text-[#620032] tracking-tight mt-2 sm:mt-3">
                     {formatINR(totalOwed)}
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-[#ddbfc6] grid grid-cols-2 gap-4 text-xs font-['JetBrains_Mono']">
+                  <div className="mt-4 sm:mt-5 pt-4 border-t border-[#ddbfc6] grid grid-cols-2 gap-4 text-xs font-['JetBrains_Mono']">
                     <div>
                       <span className="text-[#574147] block">Principal Balance</span>
-                      <span className="text-base font-bold text-[#1e1b17]">{formatINR(balance.principal)}</span>
+                      <span className="text-sm sm:text-base font-bold text-[#1e1b17]">{formatINR(balance.principal)}</span>
                     </div>
                     <div>
                       <span className="text-[#574147] block">Accrued Interest (Live)</span>
-                      <span className="text-base font-bold text-[#620032]">{formatINR(liveAccruedInterest)}</span>
+                      <span className="text-sm sm:text-base font-bold text-[#620032]">{formatINR(liveAccruedInterest)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Balance Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                   <Link
                     to={`/repayment?balanceId=${balance.id}&personId=${summary.person.id}`}
                     className="flex-1 py-3 text-center bg-[#fff8f3] border border-[#620032] text-[#620032] font-bold text-xs font-['JetBrains_Mono'] rounded-lg hover:bg-[#ffd9e2] transition-colors"
