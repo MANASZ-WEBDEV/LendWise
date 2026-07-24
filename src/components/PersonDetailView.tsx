@@ -1,207 +1,243 @@
-import React, { useState } from 'react';
-import { Person, Transaction, ViewMode } from '../types';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { fetchPeople, fetchPersonSummary, recordRateChange } from '../lib/supabase-queries';
+import { PersonSummary, DbTransaction } from '../types';
+import { formatINR } from '../lib/currency';
+import { toast } from 'sonner';
 
-interface PersonDetailViewProps {
-  person: Person;
-  transactions: Transaction[];
-  onNavigate: (view: ViewMode) => void;
-  onRecordRepayment: (person: Person) => void;
-  onNewLoanForPerson: (person: Person) => void;
-  onBack: () => void;
-}
+export const PersonDetailView: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<PersonSummary | null>(null);
 
-export const PersonDetailView: React.FC<PersonDetailViewProps> = ({
-  person,
-  transactions,
-  onNavigate,
-  onRecordRepayment,
-  onNewLoanForPerson,
-  onBack,
-}) => {
-  // Live "Explain the Math" interactive parameters
-  const [calcRate, setCalcRate] = useState<number>(person.interestRate || 14.0);
-  const [calcDays, setCalcDays] = useState<number>(person.accrualDays || 372);
-  const [showMathDetails, setShowMathDetails] = useState<boolean>(false);
+  // Rate change modal state
+  const [rateModalBalanceId, setRateModalBalanceId] = useState<string | null>(null);
+  const [newRate, setNewRate] = useState<string>('1.5');
+  const [effectiveDate, setEffectiveDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [submittingRate, setSubmittingRate] = useState(false);
 
-  // Simple interest calculation: Principal * Rate/100 * Days/365
-  const calculatedInterest = (person.principal * (calcRate / 100) * calcDays) / 365;
-  const totalOutstanding = person.principal + calculatedInterest;
+  useEffect(() => {
+    if (id) loadData(id);
+  }, [id]);
 
-  // Filter transactions relevant to this person or fallback
-  const personTxns = transactions.filter(
-    (t) => t.personId === person.id || t.personName.toLowerCase().includes(person.name.toLowerCase().split(' ')[0])
-  );
+  const loadData = async (personId: string) => {
+    setLoading(true);
+    try {
+      const people = await fetchPeople();
+      const target = people.find(p => p.id === personId);
+      if (!target) {
+        toast.error('Person not found');
+        navigate('/people');
+        return;
+      }
+      const s = await fetchPersonSummary(target);
+      setSummary(s);
+    } catch (err: any) {
+      toast.error('Failed to load person detail: ' + (err.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRateChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rateModalBalanceId || !newRate) return;
+
+    setSubmittingRate(true);
+    try {
+      await recordRateChange({
+        balanceId: rateModalBalanceId,
+        newMonthlyRate: parseFloat(newRate),
+        effectiveDate,
+      });
+      toast.success('Interest rate updated successfully');
+      setRateModalBalanceId(null);
+      if (id) loadData(id);
+    } catch (err: any) {
+      toast.error('Failed to update rate: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSubmittingRate(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-24 text-center font-['Inter']">
+        <div className="inline-block w-8 h-8 border-4 border-[#620032] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-3 text-xs font-['JetBrains_Mono'] text-[#574147]">Loading person details...</p>
+      </div>
+    );
+  }
+
+  if (!summary) return null;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-24">
+    <div className="space-y-8 max-w-7xl mx-auto pb-24 font-['Inter']">
       {/* Top Back Link */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
+        <Link
+          to="/people"
           className="inline-flex items-center gap-2 text-[#620032] font-['JetBrains_Mono'] text-xs font-semibold hover:underline"
         >
           <span className="material-symbols-outlined text-base">arrow_back</span>
           BACK TO PEOPLE DIRECTORY
-        </button>
-        <span className="text-xs text-[#574147] font-['JetBrains_Mono'] bg-[#faf2ec] px-3 py-1 rounded border border-[#ddbfc6]">
-          ID: {person.id}
-        </span>
+        </Link>
       </div>
 
-      {/* Person Header & Balance Hero Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Profile & Outstanding Balance */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-[#efe7e0] border border-[#ddbfc6] flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs">
-              <img src={person.avatar} alt={person.name} className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-[#620032] font-['Inter'] leading-tight">
-                {person.name}
-              </h1>
-              <p className="text-xs text-[#574147] font-['JetBrains_Mono']">{person.company}</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="px-3 py-0.5 bg-[#ffd9e2] text-[#8d034b] text-[11px] font-bold rounded-full font-['JetBrains_Mono'] uppercase tracking-wider">
-                  {person.tier || 'Premium Client'}
-                </span>
-                <span className="px-3 py-0.5 bg-[#efe7e0] text-[#5f5e58] text-[11px] font-bold rounded-full font-['JetBrains_Mono'] uppercase tracking-wider">
-                  Active Portfolio
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Balance Card */}
-          <div className="p-7 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
-            <div className="absolute top-2 right-2 opacity-10 pointer-events-none">
-              <span className="material-symbols-outlined text-9xl">account_balance_wallet</span>
-            </div>
-
-            <p className="font-['JetBrains_Mono'] text-xs text-[#65645e] uppercase tracking-widest font-semibold mb-1">
-              Total Outstanding Balance
+      {/* Person Header */}
+      <div className="flex items-center gap-5">
+        <div className="w-16 h-16 rounded-2xl bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-2xl font-bold shadow-xs">
+          {summary.person.name.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-[#620032] leading-tight">
+            {summary.person.name}
+          </h1>
+          {summary.person.notes && (
+            <p className="text-xs text-[#574147] font-['JetBrains_Mono'] mt-0.5">
+              {summary.person.notes}
             </p>
-
-            <div className="flex items-baseline gap-2">
-              <span className="font-['JetBrains_Mono'] text-4xl font-bold text-[#620032] tracking-tight">
-                ${totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <div className="mt-5 pt-4 border-t border-[#ddbfc6] flex flex-wrap items-center gap-4 text-xs font-['JetBrains_Mono']">
-              <div className="flex items-center text-[#ba1a1a] font-bold gap-1">
-                <span className="material-symbols-outlined text-sm">trending_up</span>
-                <span>2.4% interest accrued this month</span>
-              </div>
-              <div className="h-3 w-px bg-[#ddbfc6] hidden sm:block"></div>
-              <div className="text-[#574147]">
-                Last payment: <span className="font-semibold">{person.lastPaymentDate}</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* Right Column: "Explain the Math" Calculation Box */}
-        <div className="lg:col-span-5">
-          <div className="bg-[#ffffff] p-6 rounded-xl border border-[#ddbfc6] shadow-2xs h-full flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-5 border-b border-[#ddbfc6] pb-3">
-                <h3 className="font-bold text-lg text-[#1e1b17] flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#620032]">calculate</span>
-                  Explain the Math
-                </h3>
-                <button
-                  onClick={() => setShowMathDetails(!showMathDetails)}
-                  className="text-[#620032] hover:underline text-xs font-['JetBrains_Mono'] font-bold"
-                >
-                  {showMathDetails ? 'Simple View' : 'Adjust Math'}
-                </button>
-              </div>
-
-              {/* Math breakdown details */}
-              <div className="p-4 bg-[#faf2ec] rounded-lg border border-dashed border-[#ddbfc6] space-y-3 font-['JetBrains_Mono'] text-xs">
-                <p className="text-[10px] text-[#574147] uppercase font-bold tracking-wider mb-2">
-                  Calculation Logic (Simple Interest)
-                </p>
-
-                <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
-                  <span className="text-[#65645e]">Principal</span>
-                  <span className="font-bold text-[#1e1b17]">
-                    ${person.principal.toLocaleString('en-US')}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center py-1 border-b border-[#ddbfc6]/40">
-                  <span className="text-[#65645e]">Rate (p.a.)</span>
-                  {showMathDetails ? (
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={calcRate}
-                      onChange={(e) => setCalcRate(parseFloat(e.target.value) || 0)}
-                      className="w-20 bg-white border border-[#ddbfc6] rounded px-2 py-0.5 text-right font-bold text-[#620032]"
-                    />
-                  ) : (
-                    <span className="font-bold text-[#1e1b17]">{calcRate.toFixed(2)}%</span>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center py-1 border-b border-[#ddbfc6]/40">
-                  <span className="text-[#65645e]">Accrual Days</span>
-                  {showMathDetails ? (
-                    <input
-                      type="number"
-                      value={calcDays}
-                      onChange={(e) => setCalcDays(parseInt(e.target.value) || 0)}
-                      className="w-20 bg-white border border-[#ddbfc6] rounded px-2 py-0.5 text-right font-bold text-[#620032]"
-                    />
-                  ) : (
-                    <span className="font-bold text-[#1e1b17]">{calcDays} Days</span>
-                  )}
-                </div>
-
-                <div className="flex justify-between py-2 text-[#620032] font-bold text-sm">
-                  <span>Total Interest</span>
-                  <span>
-                    ${calculatedInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-start gap-2 text-[#574147] text-xs leading-relaxed">
-                <span className="material-symbols-outlined text-base mt-0.5 flex-shrink-0">info</span>
-                <p>
-                  Interest is calculated daily based on a 365-day year convention. Adjustments for leap years & custom payment schedules follow standard financial protocols.
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Balances & Explain-the-Math Grid */}
+      {summary.balances.length === 0 ? (
+        <div className="p-8 bg-[#fff8f3] border border-dashed border-[#ddbfc6] rounded-xl text-center">
+          <p className="text-sm font-['JetBrains_Mono'] text-[#574147] mb-4">
+            No active loan balance for {summary.person.name} yet.
+          </p>
+          <Link
+            to={`/disburse?personId=${summary.person.id}`}
+            className="px-5 py-2.5 bg-[#8b004a] text-white font-['JetBrains_Mono'] text-xs font-bold rounded-lg hover:bg-[#620032] transition-colors"
+          >
+            Disburse First Loan
+          </Link>
         </div>
-      </section>
+      ) : (
+        summary.balances.map((bItem) => {
+          const { balance, liveAccruedInterest, totalOwed, transactions, rateHistory } = bItem;
+
+          // Find initial loan date
+          const initialTxn = transactions.find(t => t.type === 'loan');
+          const initialDate = initialTxn ? initialTxn.date : balance.created_at.split('T')[0];
+
+          // Run engine to get segments for Explain the Math breakdown
+          const engineTxns = transactions.map(t => ({
+            id: t.id,
+            type: t.type,
+            amount: t.amount,
+            newRate: t.new_rate,
+            date: t.date,
+            created_at: t.created_at,
+          }));
+
+          return (
+            <section key={balance.id} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Balance Hero Card */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="p-6 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-widest font-bold text-[#620032]">
+                      {balance.direction === 'lent' ? 'They Owe You (Lent)' : 'You Owe Them (Borrowed)'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setRateModalBalanceId(balance.id);
+                        setNewRate(String(balance.current_rate));
+                      }}
+                      className="px-2.5 py-1 bg-[#fff8f3] border border-[#ddbfc6] text-[#620032] font-['JetBrains_Mono'] text-xs font-bold rounded hover:bg-[#ffd9e2] transition-colors"
+                    >
+                      Change Rate ({balance.current_rate}%/mo)
+                    </button>
+                  </div>
+
+                  <div className="font-['JetBrains_Mono'] text-4xl font-bold text-[#620032] tracking-tight mt-3">
+                    {formatINR(totalOwed)}
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-[#ddbfc6] grid grid-cols-2 gap-4 text-xs font-['JetBrains_Mono']">
+                    <div>
+                      <span className="text-[#574147] block">Principal Balance</span>
+                      <span className="text-base font-bold text-[#1e1b17]">{formatINR(balance.principal)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#574147] block">Accrued Interest (Live)</span>
+                      <span className="text-base font-bold text-[#620032]">{formatINR(liveAccruedInterest)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Balance Action Buttons */}
+                <div className="flex gap-3">
+                  <Link
+                    to={`/repayment?balanceId=${balance.id}&personId=${summary.person.id}`}
+                    className="flex-1 py-3 text-center bg-[#fff8f3] border border-[#620032] text-[#620032] font-bold text-xs font-['JetBrains_Mono'] rounded-lg hover:bg-[#ffd9e2] transition-colors"
+                  >
+                    Record Repayment
+                  </Link>
+                  <Link
+                    to={`/disburse?personId=${summary.person.id}&direction=${balance.direction}`}
+                    className="flex-1 py-3 text-center bg-[#8b004a] text-white font-bold text-xs font-['JetBrains_Mono'] rounded-lg hover:bg-[#620032] transition-colors shadow-sm"
+                  >
+                    Add Loan Amount
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Column: Explain the Math Breakdown */}
+              <div className="lg:col-span-5">
+                <div className="bg-[#ffffff] p-6 rounded-xl border border-[#ddbfc6] shadow-2xs h-full flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-4 border-b border-[#ddbfc6] pb-3">
+                      <h3 className="font-bold text-base text-[#1e1b17] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#620032]">calculate</span>
+                        Explain the Math
+                      </h3>
+                      <span className="text-[11px] font-['JetBrains_Mono'] text-[#574147]">
+                        Formula: P × (R/30) × Days
+                      </span>
+                    </div>
+
+                    <div className="p-4 bg-[#faf2ec] rounded-lg border border-dashed border-[#ddbfc6] space-y-3 font-['JetBrains_Mono'] text-xs">
+                      <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                        <span className="text-[#574147]">Monthly Interest Rate</span>
+                        <span className="font-bold text-[#620032]">{balance.current_rate}% / month</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                        <span className="text-[#574147]">Daily Interest Rate</span>
+                        <span className="font-bold text-[#1e1b17]">
+                          {(balance.current_rate / 30).toFixed(4)}% / day
+                        </span>
+                      </div>
+
+                      <div className="pt-2">
+                        <p className="text-[10px] uppercase font-bold text-[#574147] mb-2">Live Interest Formula</p>
+                        <p className="p-2.5 bg-white rounded border border-[#ddbfc6] text-[11px] leading-relaxed text-[#1e1b17]">
+                          {formatINR(balance.principal)} × ({balance.current_rate}% ÷ 30) ={' '}
+                          <strong>{formatINR(balance.principal * (balance.current_rate / 100 / 30))} / day</strong>
+                        </p>
+                      </div>
+
+                      <div className="flex justify-between py-2 text-[#620032] font-bold text-sm border-t border-[#ddbfc6]">
+                        <span>Total Live Accrued</span>
+                        <span>{formatINR(liveAccruedInterest)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+        })
+      )}
 
       {/* Transaction History Section */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h3 className="text-xl font-bold text-[#1e1b17]">Transaction History</h3>
-            <p className="text-xs text-[#574147]">Comprehensive ledger of all financial activities for {person.name}.</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => alert('Filtering transactions...')}
-              className="px-3.5 py-1.5 bg-[#efe7e0] border border-[#ddbfc6] rounded-lg text-xs font-['JetBrains_Mono'] text-[#1e1b17] hover:bg-[#e9e1db] transition-colors flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">filter_list</span>
-              Filter
-            </button>
-            <button
-              onClick={() => alert('Exporting PDF audit statement...')}
-              className="px-3.5 py-1.5 bg-[#efe7e0] border border-[#ddbfc6] rounded-lg text-xs font-['JetBrains_Mono'] text-[#1e1b17] hover:bg-[#e9e1db] transition-colors flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">download</span>
-              Export PDF
-            </button>
-          </div>
+      <section className="space-y-4 pt-4">
+        <div>
+          <h3 className="text-xl font-bold text-[#1e1b17]">Transaction History & Audit Trail</h3>
+          <p className="text-xs text-[#574147]">Chronological log of all disbursements, repayments, and rate changes.</p>
         </div>
 
         <div className="bg-[#ffffff] border border-[#ddbfc6] rounded-xl overflow-hidden shadow-2xs">
@@ -214,107 +250,116 @@ export const PersonDetailView: React.FC<PersonDetailViewProps> = ({
                 <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider">
-                  Reference
+                <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
+                  Amount
                 </th>
                 <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
-                  Debit (-)
-                </th>
-                <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
-                  Credit (+)
-                </th>
-                <th className="px-6 py-3 font-['JetBrains_Mono'] text-xs text-[#574147] uppercase tracking-wider text-right">
-                  Status
+                  Interest / Principal Applied
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ddbfc6] font-['Inter'] text-sm">
-              {personTxns.length > 0 ? (
-                personTxns.map((txn, idx) => (
-                  <tr key={txn.id || idx} className="hover:bg-[#faf2ec] transition-colors">
-                    <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs text-[#1e1b17]">{txn.date}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            txn.type === 'Repayment'
-                              ? 'bg-emerald-600'
-                              : txn.type === 'Loan Disbursement'
-                              ? 'bg-[#620032]'
-                              : 'bg-[#5f5e58]'
-                          }`}
-                        />
-                        <span>{txn.type}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-['JetBrains_Mono'] text-[#574147]">{txn.reference}</td>
-                    <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs font-semibold text-[#1e1b17]">
-                      {txn.debit ? `$${txn.debit.toLocaleString()}` : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs font-semibold text-[#620032]">
-                      {txn.credit ? `$${txn.credit.toLocaleString()}` : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold font-['JetBrains_Mono'] rounded uppercase">
-                        {txn.status || 'CLEARED'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr className="hover:bg-[#faf2ec]">
-                  <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs">12 Oct 2023</td>
-                  <td className="px-6 py-4">Repayment</td>
-                  <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs text-[#574147]">TXN-8849201</td>
-                  <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs">—</td>
-                  <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs text-[#620032] font-semibold">
-                    $5,000.00
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold font-['JetBrains_Mono'] rounded uppercase">
-                      CLEARED
-                    </span>
+              {summary.balances.flatMap(b => b.transactions).length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-xs font-['JetBrains_Mono'] text-[#574147]">
+                    No transactions recorded yet.
                   </td>
                 </tr>
+              ) : (
+                summary.balances
+                  .flatMap(b => b.transactions)
+                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .map((txn) => (
+                    <tr key={txn.id} className="hover:bg-[#faf2ec] transition-colors">
+                      <td className="px-6 py-4 font-['JetBrains_Mono'] text-xs text-[#1e1b17]">
+                        {txn.date}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-['JetBrains_Mono'] text-xs font-bold ${
+                            txn.type === 'repayment'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : txn.type === 'loan'
+                              ? 'bg-[#ffd9e2] text-[#8d034b]'
+                              : 'bg-[#e5e2da] text-[#5f5e58]'
+                          }`}
+                        >
+                          {txn.type === 'loan'
+                            ? 'Loan Disbursement'
+                            : txn.type === 'repayment'
+                            ? 'Repayment'
+                            : `Rate Change (${txn.new_rate}%/mo)`}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs font-bold text-[#1e1b17]">
+                        {txn.amount ? formatINR(txn.amount) : '—'}
+                      </td>
+                      <td className="px-6 py-4 text-right font-['JetBrains_Mono'] text-xs text-[#574147]">
+                        {txn.type === 'repayment' ? (
+                          <span>
+                            Interest: <strong className="text-[#620032]">{formatINR(txn.interest_applied)}</strong> | Principal: {formatINR(txn.principal_applied)}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Sticky Primary Actions Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-[#fff8f3]/90 backdrop-blur-md border-t border-[#ddbfc6] px-6 py-4 z-40 shadow-lg">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#ffd9e2] rounded-full text-[#8d034b]">
-              <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
-            </div>
-            <div>
-              <p className="text-[11px] font-['JetBrains_Mono'] text-[#574147] uppercase leading-none mb-1">
-                {person.name}
-              </p>
-              <p className="font-['JetBrains_Mono'] text-[#620032] font-bold text-base">
-                Outstanding: ${totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
+      {/* Rate Change Modal */}
+      {rateModalBalanceId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-[#fff8f3] border border-[#ddbfc6] rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-[#620032] mb-4">Change Interest Rate</h3>
+            <form onSubmit={handleRateChangeSubmit} className="space-y-4 font-['JetBrains_Mono'] text-xs">
+              <div>
+                <label className="block text-[#574147] mb-1 font-bold">New Monthly Rate (% / month)</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  required
+                  value={newRate}
+                  onChange={(e) => setNewRate(e.target.value)}
+                  className="w-full h-11 px-3 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] outline-none"
+                />
+              </div>
 
-          <div className="flex gap-3 w-full sm:w-auto">
-            <button
-              onClick={() => onRecordRepayment(person)}
-              className="flex-1 sm:flex-none px-6 py-2.5 bg-[#fff8f3] border border-[#620032] text-[#620032] font-bold text-xs font-['JetBrains_Mono'] rounded-lg hover:bg-[#ffd9e2] transition-all"
-            >
-              Record Repayment
-            </button>
-            <button
-              onClick={() => onNewLoanForPerson(person)}
-              className="flex-1 sm:flex-none px-6 py-2.5 bg-[#8b004a] text-white font-bold text-xs font-['JetBrains_Mono'] rounded-lg shadow-sm hover:bg-[#620032] transition-all active:scale-95"
-            >
-              New Loan
-            </button>
+              <div>
+                <label className="block text-[#574147] mb-1 font-bold">Effective Date</label>
+                <input
+                  type="date"
+                  required
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="w-full h-11 px-3 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] outline-none"
+                />
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-[#ddbfc6]">
+                <button
+                  type="button"
+                  onClick={() => setRateModalBalanceId(null)}
+                  className="px-4 py-2 border border-[#ddbfc6] rounded-lg text-[#574147]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingRate}
+                  className="px-5 py-2 bg-[#8b004a] text-white rounded-lg font-bold hover:bg-[#620032]"
+                >
+                  {submittingRate ? 'Saving...' : 'Update Rate'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
