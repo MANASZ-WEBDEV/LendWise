@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson } from '../lib/supabase-queries';
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
+import { EditPersonModal } from './EditPersonModal';
 import { toast } from 'sonner';
 
 export const PersonDetailView: React.FC = () => {
@@ -16,6 +17,9 @@ export const PersonDetailView: React.FC = () => {
   const [newRate, setNewRate] = useState<string>('1.5');
   const [effectiveDate, setEffectiveDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [submittingRate, setSubmittingRate] = useState(false);
+
+  // Edit person modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) loadData(id);
@@ -104,12 +108,21 @@ export const PersonDetailView: React.FC = () => {
           {summary.person.name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] leading-tight">
-            {summary.person.name}
-            {summary.person.is_wm && (
-              <sup className="ml-1.5 text-xs font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-1.5 py-0.5 rounded">WM</sup>
-            )}
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] leading-tight">
+              {summary.person.name}
+              {summary.person.is_wm && (
+                <sup className="ml-1.5 text-xs font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-1.5 py-0.5 rounded">WM</sup>
+              )}
+            </h1>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-[#620032] bg-[#fff8f3] border border-[#ddbfc6] font-['JetBrains_Mono'] text-[11px] font-bold rounded-md hover:bg-[#ffd9e2] transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">edit</span>
+              Edit
+            </button>
+          </div>
           {summary.person.notes && (
             <p className="text-xs text-[#574147] font-['JetBrains_Mono'] mt-0.5">
               {summary.person.notes}
@@ -411,6 +424,14 @@ export const PersonDetailView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Person Modal */}
+      <EditPersonModal
+        isOpen={isEditModalOpen}
+        person={summary.person}
+        onClose={() => setIsEditModalOpen(false)}
+        onPersonUpdated={() => { if (id) loadData(id); }}
+      />
     </div>
   );
 };
