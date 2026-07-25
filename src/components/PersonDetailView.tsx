@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson } from '../lib/supabase-queries';
+import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, recordRepaymentTransaction } from '../lib/supabase-queries';
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
+import { getQuarterlyStatus } from '../lib/quarterly-utils';
 import { EditPersonModal } from './EditPersonModal';
+import { SwipeToCollect } from './SwipeToCollect';
 import { toast } from 'sonner';
 
 export const PersonDetailView: React.FC = () => {
@@ -248,6 +250,37 @@ export const PersonDetailView: React.FC = () => {
                     Add Loan Amount
                   </Link>
                 </div>
+
+                {/* Quarterly Interest Swipe-to-Collect (lent balances only) */}
+                {balance.direction === 'lent' && balance.principal > 0 && (() => {
+                  const quarterlyStatus = getQuarterlyStatus(transactions, initialDate);
+                  return (
+                    <SwipeToCollect
+                      interestAmount={liveAccruedInterest}
+                      daysSinceLastCollection={quarterlyStatus.daysSinceLastCollection}
+                      daysUntilAvailable={quarterlyStatus.daysUntilAvailable}
+                      isAvailable={quarterlyStatus.isAvailable}
+                      lastCollectionDate={quarterlyStatus.lastCollectionDate}
+                      onCollect={async () => {
+                        try {
+                          const todayStr = new Date().toISOString().split('T')[0];
+                          await recordRepaymentTransaction({
+                            balanceId: balance.id,
+                            amount: liveAccruedInterest,
+                            outstandingInterest: liveAccruedInterest,
+                            currentPrincipal: balance.principal,
+                            date: todayStr,
+                            notes: `Quarterly interest payment (auto-collected) — ${quarterlyStatus.daysSinceLastCollection} days accrued`,
+                          });
+                          toast.success(`Collected ${formatINR(liveAccruedInterest)} quarterly interest!`);
+                          if (id) loadData(id);
+                        } catch (err: any) {
+                          toast.error('Failed to collect interest: ' + (err.message || 'Unknown error'));
+                        }
+                      }}
+                    />
+                  );
+                })()}
               </div>
 
               {/* Right Column: Explain the Math Breakdown */}
