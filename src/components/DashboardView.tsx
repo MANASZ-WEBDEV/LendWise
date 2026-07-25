@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { fetchPeople, fetchPersonSummary } from '../lib/supabase-queries';
 import { PersonSummary } from '../types';
 import { formatINR } from '../lib/currency';
+import { InterestReminders, getQuarterlyReminders } from './InterestReminders';
 import { toast } from 'sonner';
 
 export const DashboardView: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<PersonSummary[]>([]);
+  const [tableTab, setTableTab] = useState<'ALL' | 'INTEREST_DUE'>('ALL');
 
   useEffect(() => {
     loadData();
@@ -44,10 +46,14 @@ export const DashboardView: React.FC = () => {
 
   const netPosition = totalLentTotal - totalBorrowedTotal;
 
-  // Active ledgers with non-zero balance
-  const activeLedgers = summaries.filter(
-    s => s.totalLentTotal > 0 || s.totalBorrowedTotal > 0 || s.balances.length > 0
-  );
+  // Reminders list
+  const dueReminders = getQuarterlyReminders(summaries);
+  const duePersonIds = new Set(dueReminders.map(r => r.person.id));
+
+  // Displayed summaries based on active tab
+  const displayedSummaries = tableTab === 'INTEREST_DUE'
+    ? summaries.filter(s => duePersonIds.has(s.person.id))
+    : summaries;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-['Inter']">
@@ -123,43 +129,79 @@ export const DashboardView: React.FC = () => {
             </div>
           </div>
 
+          {/* Quarterly Interest Reminder Banner */}
+          <InterestReminders summaries={summaries} />
+
           {/* Active Ledgers Table */}
           <div className="bg-[#fff8f3] border border-[#ddbfc6] rounded-xl overflow-hidden shadow-xs">
-            <div className="px-6 py-4 border-b border-[#ddbfc6] flex justify-between items-center bg-[#faf2ec]">
+            <div className="px-6 py-4 border-b border-[#ddbfc6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#faf2ec]">
               <div>
                 <h3 className="font-bold text-lg text-[#1e1b17]">Active Ledgers</h3>
                 <p className="text-xs text-[#574147]">Click any borrower row to open detail view & interest breakdown</p>
               </div>
-              <Link
-                to="/people"
-                className="text-[#620032] font-bold font-['JetBrains_Mono'] text-xs flex items-center gap-1 hover:underline"
-              >
-                View All People <span className="material-symbols-outlined text-sm">chevron_right</span>
-              </Link>
+
+              {/* Tabs */}
+              <div className="flex bg-white/70 p-1 rounded-lg border border-[#ddbfc6]/60 font-['JetBrains_Mono'] text-xs font-semibold">
+                <button
+                  onClick={() => setTableTab('ALL')}
+                  className={`px-3 py-1.5 rounded-md transition-all ${
+                    tableTab === 'ALL'
+                      ? 'bg-[#620032] text-white shadow-xs'
+                      : 'text-[#574147] hover:bg-[#efe7e0]'
+                  }`}
+                >
+                  All Ledgers ({summaries.length})
+                </button>
+                <button
+                  onClick={() => setTableTab('INTEREST_DUE')}
+                  className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                    tableTab === 'INTEREST_DUE'
+                      ? 'bg-[#8b004a] text-white shadow-xs'
+                      : 'text-[#574147] hover:bg-[#efe7e0]'
+                  }`}
+                >
+                  <span>3-Month Due</span>
+                  {dueReminders.length > 0 && (
+                    <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+                      tableTab === 'INTEREST_DUE' ? 'bg-white text-[#8b004a]' : 'bg-[#8b004a] text-white'
+                    }`}>
+                      {dueReminders.length}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {summaries.length === 0 ? (
+            {displayedSummaries.length === 0 ? (
               <div className="py-12 text-center p-6">
                 <div className="w-12 h-12 rounded-full bg-[#ffd9e2] text-[#8d034b] flex items-center justify-center mx-auto mb-3">
-                  <span className="material-symbols-outlined text-2xl">person_add</span>
+                  <span className="material-symbols-outlined text-2xl">
+                    {tableTab === 'INTEREST_DUE' ? 'event_available' : 'person_add'}
+                  </span>
                 </div>
-                <h4 className="font-bold text-base text-[#1e1b17]">No contacts in your ledger yet</h4>
+                <h4 className="font-bold text-base text-[#1e1b17]">
+                  {tableTab === 'INTEREST_DUE' ? 'No 3-month interest due right now' : 'No contacts in your ledger yet'}
+                </h4>
                 <p className="text-xs text-[#574147] max-w-sm mx-auto mt-1 font-['JetBrains_Mono'] mb-4">
-                  Add your first contact to start tracking informal loans and accruing interest.
+                  {tableTab === 'INTEREST_DUE'
+                    ? 'All contacts are up to date with their quarterly interest payments.'
+                    : 'Add your first contact to start tracking informal loans and accruing interest.'}
                 </p>
-                <Link
-                  to="/people"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#8b004a] text-white font-['JetBrains_Mono'] text-xs font-bold rounded-lg hover:bg-[#620032] transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">add</span>
-                  Add Person
-                </Link>
+                {tableTab === 'ALL' && (
+                  <Link
+                    to="/people"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#8b004a] text-white font-['JetBrains_Mono'] text-xs font-bold rounded-lg hover:bg-[#620032] transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Add Person
+                  </Link>
+                )}
               </div>
             ) : (
               <>
                 {/* Mobile Card View (Visible < 640px) */}
                 <div className="block sm:hidden divide-y divide-[#ddbfc6]">
-                  {summaries.map((s) => {
+                  {displayedSummaries.map((s) => {
                     const lentBal = s.balances.find(b => b.balance.direction === 'lent');
                     const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
 
@@ -219,7 +261,7 @@ export const DashboardView: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#ddbfc6]">
-                      {summaries.map((s) => {
+                      {displayedSummaries.map((s) => {
                         const lentBal = s.balances.find(b => b.balance.direction === 'lent');
                         const borrowedBal = s.balances.find(b => b.balance.direction === 'borrowed');
 
@@ -276,3 +318,4 @@ export const DashboardView: React.FC = () => {
     </div>
   );
 };
+
