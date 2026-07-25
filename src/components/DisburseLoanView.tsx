@@ -4,6 +4,7 @@ import { fetchPeople, recordLoanDisbursement } from '../lib/supabase-queries';
 import { DbPerson, BalanceDirection } from '../types';
 import { formatINR } from '../lib/currency';
 import { computePeriodInterest, getDaysDifference } from '../lib/interest-engine';
+import { DatePicker } from './DatePicker';
 import { toast } from 'sonner';
 
 export const DisburseLoanView: React.FC = () => {
@@ -191,12 +192,10 @@ export const DisburseLoanView: React.FC = () => {
               <label className="block font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
                 Loan Start Date (Effective Date) *
               </label>
-              <input
-                type="date"
-                required
+              <DatePicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full h-11 px-4 bg-[#fff8f3] border border-[#ddbfc6] rounded-lg text-sm font-['Inter'] focus:border-[#620032] outline-none"
+                onChange={(val) => setDate(val)}
+                required
               />
             </div>
 
@@ -205,11 +204,10 @@ export const DisburseLoanView: React.FC = () => {
               <label className="block font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
                 Interest Paid Till (Optional)
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={interestPaidTill}
-                onChange={(e) => setInterestPaidTill(e.target.value)}
-                className="w-full h-11 px-4 bg-[#fff8f3] border border-[#ddbfc6] rounded-lg text-sm font-['Inter'] focus:border-[#620032] outline-none"
+                onChange={(val) => setInterestPaidTill(val)}
+                placeholder="Leave blank for new loans"
               />
               <p className="text-[10px] text-[#8a7077] font-['JetBrains_Mono']">
                 For existing loans — enter the date up to which interest has already been collected. Leave blank for new loans.

@@ -7,6 +7,7 @@ import { getQuarterlyStatus, computeQuarterlyInterestAmount, addQuarterToDate } 
 import { EditPersonModal } from './EditPersonModal';
 import { EditInterestPaidTillModal } from './EditInterestPaidTillModal';
 import { SwipeToCollect } from './SwipeToCollect';
+import { DatePicker } from './DatePicker';
 import { toast } from 'sonner';
 
 export const PersonDetailView: React.FC = () => {
@@ -519,12 +520,10 @@ export const PersonDetailView: React.FC = () => {
 
               <div>
                 <label className="block text-[#574147] mb-1 font-bold">Effective Date</label>
-                <input
-                  type="date"
-                  required
+                <DatePicker
                   value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  className="w-full h-11 px-3 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] outline-none"
+                  onChange={(val) => setEffectiveDate(val)}
+                  required
                 />
               </div>
 

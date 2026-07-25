@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateBalanceInterestPaidTill } from '../lib/supabase-queries';
+import { DatePicker } from './DatePicker';
 import { toast } from 'sonner';
 
 interface EditInterestPaidTillModalProps {
@@ -74,12 +75,10 @@ export const EditInterestPaidTillModal: React.FC<EditInterestPaidTillModalProps>
             <label className="font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
               Interest Paid Up To Date *
             </label>
-            <input
-              type="date"
-              required
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full h-11 px-4 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] focus:ring-1 focus:ring-[#620032] outline-none font-['JetBrains_Mono']"
+              onChange={(val) => setDate(val)}
+              required
             />
           </div>
 

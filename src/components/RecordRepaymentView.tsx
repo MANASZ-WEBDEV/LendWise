@@ -4,6 +4,7 @@ import { fetchPeople, fetchPersonSummary, recordRepaymentTransaction, archivePer
 import { PersonSummary, DbBalance } from '../types';
 import { formatINR } from '../lib/currency';
 import { calculateRepaymentSplit } from '../lib/interest-engine';
+import { DatePicker } from './DatePicker';
 import { toast } from 'sonner';
 
 export const RecordRepaymentView: React.FC = () => {
@@ -211,12 +212,10 @@ export const RecordRepaymentView: React.FC = () => {
                   <label className="block font-['JetBrains_Mono'] text-xs text-[#574147] uppercase font-bold">
                     Payment Received Date *
                   </label>
-                  <input
-                    type="date"
-                    required
+                  <DatePicker
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full h-11 px-4 bg-[#fff8f3] border border-[#ddbfc6] rounded-lg text-sm outline-none"
+                    onChange={(val) => setDate(val)}
+                    required
                   />
                 </div>
 
