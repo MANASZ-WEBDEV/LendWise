@@ -61,7 +61,7 @@ export default function App() {
         <Header userEmail={session.user?.email} />
 
         {/* Main Layout Area */}
-        <div className="flex-1 flex pt-14 pb-20 md:pb-8">
+        <div className="flex-1 flex pb-20 md:pb-8">
           {/* Fixed Left Sidebar */}
           <Sidebar />
 
