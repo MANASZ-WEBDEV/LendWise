@@ -9,13 +9,19 @@ import { DbTransaction } from '../types';
 import { getDaysDifference } from './interest-engine';
 
 /**
- * Finds the date of the most recent interest collection (repayment with interest_applied > 0).
- * Falls back to the initial loan date if no interest has ever been collected.
+ * Finds the date of the most recent interest collection.
+ * Uses interestPaidTill if explicitly set, otherwise checks transaction history for repayments,
+ * and falls back to the initial loan date.
  */
 export function getLastInterestCollectionDate(
   transactions: DbTransaction[],
-  initialLoanDate: string
+  initialLoanDate: string,
+  interestPaidTill?: string | null
 ): string {
+  if (interestPaidTill) {
+    return interestPaidTill;
+  }
+
   // Look for the most recent repayment that applied interest
   const interestRepayments = transactions
     .filter(t => t.type === 'repayment' && t.interest_applied !== null && t.interest_applied > 0)
@@ -34,9 +40,10 @@ export function getLastInterestCollectionDate(
 export function getDaysSinceLastCollection(
   transactions: DbTransaction[],
   initialLoanDate: string,
-  asOfDate?: string
+  asOfDate?: string,
+  interestPaidTill?: string | null
 ): number {
-  const lastDate = getLastInterestCollectionDate(transactions, initialLoanDate);
+  const lastDate = getLastInterestCollectionDate(transactions, initialLoanDate, interestPaidTill);
   const today = asOfDate || new Date().toISOString().split('T')[0];
   return getDaysDifference(lastDate, today);
 }
@@ -72,10 +79,11 @@ export interface QuarterlyStatus {
 export function getQuarterlyStatus(
   transactions: DbTransaction[],
   initialLoanDate: string,
-  asOfDate?: string
+  asOfDate?: string,
+  interestPaidTill?: string | null
 ): QuarterlyStatus {
-  const lastCollectionDate = getLastInterestCollectionDate(transactions, initialLoanDate);
-  const daysSince = getDaysSinceLastCollection(transactions, initialLoanDate, asOfDate);
+  const lastCollectionDate = getLastInterestCollectionDate(transactions, initialLoanDate, interestPaidTill);
+  const daysSince = getDaysSinceLastCollection(transactions, initialLoanDate, asOfDate, interestPaidTill);
   const daysUntil = getDaysUntilNextCollection(daysSince);
 
   return {

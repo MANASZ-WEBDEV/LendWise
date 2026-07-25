@@ -28,6 +28,7 @@ create table balances (
   principal numeric(14,2) not null default 0,
   outstanding_interest numeric(14,2) not null default 0,
   current_rate numeric(6,3) not null, -- monthly % rate e.g. 1.500
+  interest_paid_till date default null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (person_id, direction)
@@ -86,3 +87,4 @@ create policy "Users can manage their own transactions" on transactions
 -- 5. MIGRATION (run on existing database if tables already exist)
 -- ALTER TABLE people ADD COLUMN phone text;
 -- ALTER TABLE people ADD COLUMN is_wm boolean NOT NULL DEFAULT false;
+-- ALTER TABLE balances ADD COLUMN interest_paid_till date;

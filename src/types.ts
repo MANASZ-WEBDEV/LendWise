@@ -29,6 +29,7 @@ export interface DbBalance {
   principal: number;
   outstanding_interest: number;
   current_rate: number; // monthly % rate
+  interest_paid_till: string | null; // ISO date 'YYYY-MM-DD'
   created_at: string;
   updated_at: string;
 }

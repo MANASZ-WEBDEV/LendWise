@@ -5,6 +5,7 @@ import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
 import { getQuarterlyStatus } from '../lib/quarterly-utils';
 import { EditPersonModal } from './EditPersonModal';
+import { EditInterestPaidTillModal } from './EditInterestPaidTillModal';
 import { SwipeToCollect } from './SwipeToCollect';
 import { toast } from 'sonner';
 
@@ -22,6 +23,10 @@ export const PersonDetailView: React.FC = () => {
 
   // Edit person modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Edit interest paid till date modal state
+  const [editPaidTillBalanceId, setEditPaidTillBalanceId] = useState<string | null>(null);
+  const [currentPaidTillDate, setCurrentPaidTillDate] = useState<string>('');
 
   useEffect(() => {
     if (id) loadData(id);
@@ -233,6 +238,41 @@ export const PersonDetailView: React.FC = () => {
                       <span className="text-sm sm:text-base font-bold text-[#620032]">{formatINR(liveAccruedInterest)}</span>
                     </div>
                   </div>
+
+                  {/* Loan Timeline Box */}
+                  {(() => {
+                    const quarterlyStatus = getQuarterlyStatus(transactions, initialDate, undefined, balance.interest_paid_till);
+                    return (
+                      <div className="mt-4 p-3 bg-[#faf2ec] rounded-lg border border-[#ddbfc6]/60 text-xs font-['JetBrains_Mono'] space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#574147] flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">calendar_month</span>
+                            Money Lent On
+                          </span>
+                          <span className="font-bold text-[#1e1b17]">{initialDate}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-[#ddbfc6]/40">
+                          <span className="text-[#574147] flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
+                            Interest Paid Till
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[#8b004a]">{quarterlyStatus.lastCollectionDate}</span>
+                            <button
+                              onClick={() => {
+                                setEditPaidTillBalanceId(balance.id);
+                                setCurrentPaidTillDate(quarterlyStatus.lastCollectionDate);
+                              }}
+                              className="p-1 hover:bg-[#ffd9e2] rounded text-[#8b004a] transition-colors"
+                              title="Edit Interest Paid Till Date"
+                            >
+                              <span className="material-symbols-outlined text-sm">edit_calendar</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Balance Action Buttons */}
@@ -253,7 +293,7 @@ export const PersonDetailView: React.FC = () => {
 
                 {/* Quarterly Interest Swipe-to-Collect (lent balances only) */}
                 {balance.direction === 'lent' && balance.principal > 0 && (() => {
-                  const quarterlyStatus = getQuarterlyStatus(transactions, initialDate);
+                  const quarterlyStatus = getQuarterlyStatus(transactions, initialDate, undefined, balance.interest_paid_till);
                   return (
                     <SwipeToCollect
                       interestAmount={liveAccruedInterest}
@@ -464,6 +504,15 @@ export const PersonDetailView: React.FC = () => {
         person={summary.person}
         onClose={() => setIsEditModalOpen(false)}
         onPersonUpdated={() => { if (id) loadData(id); }}
+      />
+
+      {/* Edit Interest Paid Till Date Modal */}
+      <EditInterestPaidTillModal
+        isOpen={!!editPaidTillBalanceId}
+        balanceId={editPaidTillBalanceId}
+        currentDate={currentPaidTillDate}
+        onClose={() => setEditPaidTillBalanceId(null)}
+        onUpdated={() => { if (id) loadData(id); }}
       />
     </div>
   );

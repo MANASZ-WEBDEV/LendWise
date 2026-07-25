@@ -29,7 +29,7 @@ export const getQuarterlyReminders = (summaries: PersonSummary[]): ReminderItem[
     const initialTxn = lentBal.transactions.find(t => t.type === 'loan');
     const initialDate = initialTxn ? initialTxn.date : lentBal.balance.created_at.split('T')[0];
 
-    const status = getQuarterlyStatus(lentBal.transactions, initialDate);
+    const status = getQuarterlyStatus(lentBal.transactions, initialDate, undefined, lentBal.balance.interest_paid_till);
 
     // Alert if 88 or more days have elapsed (2 days before 90 days, or past 90 days)
     if (status.daysSinceLastCollection >= 88) {

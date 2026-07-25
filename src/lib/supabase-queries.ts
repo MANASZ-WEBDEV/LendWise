@@ -308,6 +308,29 @@ export async function recordRepaymentTransaction(params: {
   });
 
   if (error) throw error;
+
+  // If interest was paid in this repayment, update interest_paid_till date on balance
+  if (split.interestPaid > 0) {
+    await supabase
+      .from('balances')
+      .update({ interest_paid_till: params.date, updated_at: new Date().toISOString() })
+      .eq('id', params.balanceId);
+  }
+}
+
+/**
+ * Manually update the interest_paid_till date on a balance.
+ */
+export async function updateBalanceInterestPaidTill(
+  balanceId: string,
+  interestPaidTill: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('balances')
+    .update({ interest_paid_till: interestPaidTill, updated_at: new Date().toISOString() })
+    .eq('id', balanceId);
+
+  if (error) throw error;
 }
 
 /**
