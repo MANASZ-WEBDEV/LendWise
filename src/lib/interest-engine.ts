@@ -9,6 +9,8 @@ export interface TransactionRecord {
   id: string;
   type: 'loan' | 'repayment' | 'rate_change';
   amount?: number | null;
+  interest_applied?: number | null;
+  principal_applied?: number | null;
   newRate?: number | null;
   date: string; // ISO string 'YYYY-MM-DD'
   created_at?: string;
@@ -153,12 +155,16 @@ export function calculateBalanceState(
         currentPrincipal += t.amount;
       } else if (t.type === 'repayment' && t.amount) {
         const payment = t.amount;
-        const interestCovered = Math.min(payment, outstandingInterest);
-        const principalCovered = Math.min(payment - interestCovered, currentPrincipal);
+        const interestCovered = (t.interest_applied !== undefined && t.interest_applied !== null)
+          ? Math.min(payment, t.interest_applied)
+          : 0;
+        const principalCovered = (t.principal_applied !== undefined && t.principal_applied !== null)
+          ? Math.min(payment, t.principal_applied)
+          : Math.min(payment, currentPrincipal);
 
         interestPaidTotal += interestCovered;
         outstandingInterest -= interestCovered;
-        currentPrincipal -= principalCovered;
+        currentPrincipal = Math.max(0, currentPrincipal - principalCovered);
       }
     }
 
@@ -188,12 +194,16 @@ export function calculateBalanceState(
       currentPrincipal += t.amount;
     } else if (t.type === 'repayment' && t.amount) {
       const payment = t.amount;
-      const interestCovered = Math.min(payment, outstandingInterest);
-      const principalCovered = Math.min(payment - interestCovered, currentPrincipal);
+      const interestCovered = (t.interest_applied !== undefined && t.interest_applied !== null)
+        ? Math.min(payment, t.interest_applied)
+        : 0;
+      const principalCovered = (t.principal_applied !== undefined && t.principal_applied !== null)
+        ? Math.min(payment, t.principal_applied)
+        : Math.min(payment, currentPrincipal);
 
       interestPaidTotal += interestCovered;
       outstandingInterest -= interestCovered;
-      currentPrincipal -= principalCovered;
+      currentPrincipal = Math.max(0, currentPrincipal - principalCovered);
     }
   }
 
@@ -208,28 +218,49 @@ export function calculateBalanceState(
 
 /**
  * Calculates repayment breakdown for a prospective payment.
- * Payment clears outstanding interest first, then principal.
+ * By default, 100% of repayment reduces principal.
  */
 export function calculateRepaymentSplit(
   paymentAmount: number,
   outstandingInterest: number,
-  currentPrincipal: number
+  currentPrincipal: number,
+  deductFromPrincipal: boolean = true
 ) {
   const amount = Math.max(0, paymentAmount);
-  const interestPaid = Math.min(amount, Math.max(0, outstandingInterest));
-  const remainder = amount - interestPaid;
-  const principalPaid = Math.min(remainder, Math.max(0, currentPrincipal));
-  const overpaid = Math.max(0, remainder - principalPaid);
 
-  const newPrincipal = Math.max(0, currentPrincipal - principalPaid);
-  const newInterest = Math.max(0, outstandingInterest - interestPaid);
+  if (deductFromPrincipal) {
+    const principalPaid = Math.min(amount, Math.max(0, currentPrincipal));
+    const remainder = amount - principalPaid;
+    const interestPaid = Math.min(remainder, Math.max(0, outstandingInterest));
+    const overpaid = Math.max(0, remainder - interestPaid);
 
-  return {
-    interestPaid: Math.round(interestPaid * 100) / 100,
-    principalPaid: Math.round(principalPaid * 100) / 100,
-    overpaid: Math.round(overpaid * 100) / 100,
-    newPrincipal: Math.round(newPrincipal * 100) / 100,
-    newInterest: Math.round(newInterest * 100) / 100,
-    totalRemaining: Math.round((newPrincipal + newInterest) * 100) / 100,
-  };
+    const newPrincipal = Math.max(0, currentPrincipal - principalPaid);
+    const newInterest = Math.max(0, outstandingInterest - interestPaid);
+
+    return {
+      interestPaid: Math.round(interestPaid * 100) / 100,
+      principalPaid: Math.round(principalPaid * 100) / 100,
+      overpaid: Math.round(overpaid * 100) / 100,
+      newPrincipal: Math.round(newPrincipal * 100) / 100,
+      newInterest: Math.round(newInterest * 100) / 100,
+      totalRemaining: Math.round((newPrincipal + newInterest) * 100) / 100,
+    };
+  } else {
+    const interestPaid = Math.min(amount, Math.max(0, outstandingInterest));
+    const remainder = amount - interestPaid;
+    const principalPaid = Math.min(remainder, Math.max(0, currentPrincipal));
+    const overpaid = Math.max(0, remainder - principalPaid);
+
+    const newPrincipal = Math.max(0, currentPrincipal - principalPaid);
+    const newInterest = Math.max(0, outstandingInterest - interestPaid);
+
+    return {
+      interestPaid: Math.round(interestPaid * 100) / 100,
+      principalPaid: Math.round(principalPaid * 100) / 100,
+      overpaid: Math.round(overpaid * 100) / 100,
+      newPrincipal: Math.round(newPrincipal * 100) / 100,
+      newInterest: Math.round(newInterest * 100) / 100,
+      totalRemaining: Math.round((newPrincipal + newInterest) * 100) / 100,
+    };
+  }
 }

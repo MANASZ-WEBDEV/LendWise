@@ -236,6 +236,16 @@ export async function recordLoanDisbursement(params: {
 
   if (existingBalances && existingBalances.length > 0) {
     balanceId = existingBalances[0].id;
+
+    // Reset interest_paid_till to new loan date and update rate if changed
+    await supabase
+      .from('balances')
+      .update({
+        interest_paid_till: params.date,
+        current_rate: params.monthlyRate,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', balanceId);
   } else {
     // Create new balance
     const { data: newBal, error: createBalErr } = await supabase
@@ -247,6 +257,7 @@ export async function recordLoanDisbursement(params: {
         principal: 0,
         outstanding_interest: 0,
         current_rate: params.monthlyRate,
+        interest_paid_till: params.date,
       })
       .select()
       .single();
@@ -262,6 +273,12 @@ export async function recordLoanDisbursement(params: {
       effective_from: params.date,
     });
   }
+
+  // Unarchive person if archived
+  await supabase
+    .from('people')
+    .update({ archived_at: null })
+    .eq('id', params.personId);
 
   // Insert loan transaction
   const { error: txnErr } = await supabase.from('transactions').insert({

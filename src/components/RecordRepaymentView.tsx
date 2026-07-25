@@ -88,6 +88,10 @@ export const RecordRepaymentView: React.FC = () => {
       toast.error('Please enter a valid repayment amount');
       return;
     }
+    if (numAmount > totalDue) {
+      toast.error(`Repayment cannot exceed total outstanding balance of ${formatINR(totalDue)}`);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -134,7 +138,7 @@ export const RecordRepaymentView: React.FC = () => {
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#8b004a] tracking-tight">Record Repayment</h1>
         <p className="text-[#574147] text-xs sm:text-sm mt-1">
-          Payments are automatically applied to interest first, then to principal.
+          Repayments are applied 100% directly to Principal reduction.
         </p>
       </div>
 

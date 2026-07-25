@@ -208,6 +208,16 @@ export const PersonDetailView: React.FC = () => {
                   </div>
                 )}
 
+                {balance.principal === 0 && liveAccruedInterest > 0 && (
+                  <div className="p-3.5 sm:p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5 font-['JetBrains_Mono'] text-xs text-amber-900 shadow-2xs">
+                    <span className="material-symbols-outlined text-amber-600 text-xl">pause_circle</span>
+                    <div>
+                      <span className="font-bold block">Principal Fully Repaid (₹0.00 Principal)</span>
+                      <span className="text-[11px] text-amber-700">Interest accrual paused (₹0.00/day). Remaining unpaid interest due: {formatINR(liveAccruedInterest)}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="p-4 sm:p-6 bg-[#f4ece6] border border-[#ddbfc6] rounded-xl relative overflow-hidden shadow-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                     <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-widest font-bold text-[#620032]">

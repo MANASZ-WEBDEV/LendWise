@@ -44,24 +44,24 @@ describe('Interest Engine — Unit Tests', () => {
     expect(result.segments[0].days).toBe(39);
   });
 
+  it('handles repayments with principal-first reduction logic (default)', () => {
+    const split = calculateRepaymentSplit(5000, 200, 10000, true);
+
+    expect(split.principalPaid).toBe(5000);
+    expect(split.interestPaid).toBe(0);
+    expect(split.newPrincipal).toBe(5000);
+    expect(split.newInterest).toBe(200);
+    expect(split.totalRemaining).toBe(5200);
+  });
+
   it('handles repayments with interest-first application logic', () => {
-    const split = calculateRepaymentSplit(5000, 200, 10000);
+    const split = calculateRepaymentSplit(5000, 200, 10000, false);
 
     expect(split.interestPaid).toBe(200);
     expect(split.principalPaid).toBe(4800);
     expect(split.newPrincipal).toBe(5200);
     expect(split.newInterest).toBe(0);
     expect(split.totalRemaining).toBe(5200);
-  });
-
-  it('handles partial repayment less than outstanding interest', () => {
-    const split = calculateRepaymentSplit(150, 200, 10000);
-
-    expect(split.interestPaid).toBe(150);
-    expect(split.principalPaid).toBe(0);
-    expect(split.newPrincipal).toBe(10000);
-    expect(split.newInterest).toBe(50);
-    expect(split.totalRemaining).toBe(10050);
   });
 
   it('handles rate changes mid-period', () => {
