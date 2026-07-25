@@ -97,7 +97,7 @@ export const PersonDetailView: React.FC = () => {
   if (!summary) return null;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-24 font-['Inter']">
+    <div className="space-y-4 sm:space-y-8 max-w-7xl mx-auto pb-24 font-['Inter']">
       {/* Top Back Link */}
       <div className="flex items-center justify-between">
         <Link
@@ -251,12 +251,12 @@ export const PersonDetailView: React.FC = () => {
                           </span>
                           <span className="font-bold text-[#1e1b17]">{initialDate}</span>
                         </div>
-                        <div className="flex justify-between items-center pt-1 border-t border-[#ddbfc6]/40">
-                          <span className="text-[#574147] flex items-center gap-1">
+                        <div className="flex justify-between items-center gap-2 flex-wrap pt-1.5 border-t border-[#ddbfc6]/40">
+                          <span className="text-[#574147] flex items-center gap-1 shrink-0">
                             <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
                             Interest Paid Till
                           </span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 ml-auto">
                             <span className="font-bold text-[#8b004a]">{quarterlyStatus.lastCollectionDate}</span>
                             <button
                               onClick={() => {
