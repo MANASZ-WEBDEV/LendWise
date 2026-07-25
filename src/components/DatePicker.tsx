@@ -175,6 +175,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               type="button"
               onClick={() => {
                 if (view === 'calendar') goToPrevMonth();
+                else if (view === 'months') setViewYear(y => y - 1);
                 else if (view === 'years') setYearRangeStart(s => s - 12);
               }}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ffd9e2] text-[#620032] transition-colors active:scale-90"
@@ -186,7 +187,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               type="button"
               onClick={() => {
                 if (view === 'calendar') setView('months');
-                else if (view === 'months') setView('years');
+                else if (view === 'months') {
+                  setYearRangeStart(Math.floor(viewYear / 12) * 12);
+                  setView('years');
+                }
                 else setView('calendar');
               }}
               className="px-3 py-1 rounded-lg hover:bg-[#ffd9e2] transition-colors font-['JetBrains_Mono'] text-xs font-bold text-[#620032]"
@@ -200,6 +204,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               type="button"
               onClick={() => {
                 if (view === 'calendar') goToNextMonth();
+                else if (view === 'months') setViewYear(y => y + 1);
                 else if (view === 'years') setYearRangeStart(s => s + 12);
               }}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#ffd9e2] text-[#620032] transition-colors active:scale-90"
