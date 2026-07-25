@@ -37,21 +37,34 @@ export interface InterestAccrualResult {
 }
 
 /**
- * Calculates the number of calendar days between two ISO date strings ('YYYY-MM-DD').
+ * Calculates the number of days between two ISO date strings ('YYYY-MM-DD')
+ * using the 30/360 fixed-month convention (where every month is treated as 30 days).
  * Assumes start <= end.
  */
 export function getDaysDifference(startDateStr: string, endDateStr: string): number {
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
-  
-  // Set to midnight UTC to prevent daylight savings issues
-  const startUTC = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
-  const endUTC = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
-  
-  const diffMs = endUTC - startUTC;
-  if (diffMs <= 0) return 0;
-  
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+
+  const startUTC = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
+  const endUTC = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()));
+
+  if (endUTC <= startUTC) return 0;
+
+  let y1 = startUTC.getUTCFullYear();
+  let m1 = startUTC.getUTCMonth() + 1;
+  let d1 = startUTC.getUTCDate();
+
+  let y2 = endUTC.getUTCFullYear();
+  let m2 = endUTC.getUTCMonth() + 1;
+  let d2 = endUTC.getUTCDate();
+
+  if (d1 === 31) d1 = 30;
+  if (d2 === 31 && d1 >= 30) d2 = 30;
+
+  const days = 360 * (y2 - y1) + 30 * (m2 - m1) + (d2 - d1);
+  return Math.max(0, days);
 }
 
 /**
