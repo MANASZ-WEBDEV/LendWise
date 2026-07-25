@@ -104,6 +104,53 @@ export async function unarchivePerson(personId: string): Promise<void> {
 }
 
 /**
+ * Permanently delete a person and all their related data (balances, transactions, rate history).
+ * Only allowed when there are no outstanding balances.
+ */
+export async function deletePerson(personId: string): Promise<void> {
+  // Fetch all balances for this person
+  const { data: balances, error: bErr } = await supabase
+    .from('balances')
+    .select('id')
+    .eq('person_id', personId);
+
+  if (bErr) throw bErr;
+
+  const balanceIds = (balances || []).map(b => b.id);
+
+  if (balanceIds.length > 0) {
+    // Delete all transactions for these balances
+    const { error: txnErr } = await supabase
+      .from('transactions')
+      .delete()
+      .in('balance_id', balanceIds);
+    if (txnErr) throw txnErr;
+
+    // Delete all rate history for these balances
+    const { error: rhErr } = await supabase
+      .from('rate_history')
+      .delete()
+      .in('balance_id', balanceIds);
+    if (rhErr) throw rhErr;
+
+    // Delete all balances
+    const { error: balErr } = await supabase
+      .from('balances')
+      .delete()
+      .eq('person_id', personId);
+    if (balErr) throw balErr;
+  }
+
+  // Delete the person
+  const { error: pErr } = await supabase
+    .from('people')
+    .delete()
+    .eq('id', personId);
+
+  if (pErr) throw pErr;
+}
+
+/**
  * Fetch full details and balances for a person, computing live accruing interest using the engine.
  */
 export async function fetchPersonSummary(person: DbPerson): Promise<PersonSummary> {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, recordRepaymentTransaction, updateBalanceInterestPaidTill } from '../lib/supabase-queries';
+import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, deletePerson, recordRepaymentTransaction, updateBalanceInterestPaidTill } from '../lib/supabase-queries';
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
 import { getQuarterlyStatus, computeQuarterlyInterestAmount, addQuarterToDate } from '../lib/quarterly-utils';
@@ -27,6 +27,11 @@ export const PersonDetailView: React.FC = () => {
   // Edit interest paid till date modal state
   const [editPaidTillBalanceId, setEditPaidTillBalanceId] = useState<string | null>(null);
   const [currentPaidTillDate, setCurrentPaidTillDate] = useState<string>('');
+
+  // Delete person confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (id) loadData(id);
@@ -61,6 +66,25 @@ export const PersonDetailView: React.FC = () => {
       navigate('/people');
     } catch (err: any) {
       toast.error('Failed to archive contact: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!summary) return;
+    if (deleteConfirmName.trim() !== summary.person.name.trim()) {
+      toast.error('Name does not match. Please type the exact name to confirm deletion.');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deletePerson(summary.person.id);
+      toast.success(`${summary.person.name} and all their data has been permanently deleted.`);
+      navigate('/people');
+    } catch (err: any) {
+      toast.error('Failed to delete contact: ' + (err.message || 'Unknown error'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -128,6 +152,14 @@ export const PersonDetailView: React.FC = () => {
             >
               <span className="material-symbols-outlined text-sm">edit</span>
               Edit
+            </button>
+            <button
+              onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmName(''); }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-red-700 bg-red-50 border border-red-200 font-['JetBrains_Mono'] text-[11px] font-bold rounded-md hover:bg-red-100 transition-colors"
+              title="Permanently delete this person and all their data"
+            >
+              <span className="material-symbols-outlined text-sm">delete_forever</span>
+              Delete
             </button>
           </div>
           {summary.person.notes && (
@@ -533,6 +565,64 @@ export const PersonDetailView: React.FC = () => {
         onClose={() => setEditPaidTillBalanceId(null)}
         onUpdated={() => { if (id) loadData(id); }}
       />
+      {/* Delete Person Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white rounded-xl border border-red-200 max-w-md w-full shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-red-200 bg-red-50 rounded-t-xl">
+              <div className="flex items-center gap-2.5 text-red-800">
+                <span className="material-symbols-outlined text-2xl">warning</span>
+                <h3 className="font-bold text-base">Permanently Delete {summary.person.name}?</h3>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="text-xs font-['JetBrains_Mono'] text-red-900 bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+                <p className="font-bold">⚠ This action cannot be undone.</p>
+                <p>This will permanently delete:</p>
+                <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px]">
+                  <li>The contact record for <strong>{summary.person.name}</strong></li>
+                  <li>All loan balances</li>
+                  <li>All transaction history</li>
+                  <li>All rate change records</li>
+                </ul>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block font-['JetBrains_Mono'] text-xs text-[#574147] font-bold">
+                  Type <span className="text-red-700">{summary.person.name}</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  placeholder={summary.person.name}
+                  className="w-full h-11 px-3 bg-white border border-red-200 rounded-lg text-sm font-['JetBrains_Mono'] focus:border-red-500 outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 border border-[#ddbfc6] rounded-lg text-[#574147] font-['JetBrains_Mono'] text-xs font-bold hover:bg-[#faf2ec]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting || deleteConfirmName.trim() !== summary.person.name.trim()}
+                  className="px-5 py-2 bg-red-700 text-white rounded-lg font-['JetBrains_Mono'] text-xs font-bold hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Permanently'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
