@@ -216,7 +216,8 @@ export async function fetchPersonSummary(person: DbPerson): Promise<PersonSummar
       Number(b.current_rate),
       engineTxns,
       engineRates,
-      todayStr
+      todayStr,
+      b.interest_paid_till
     );
 
     const liveAccrued = calcResult.outstandingInterest;

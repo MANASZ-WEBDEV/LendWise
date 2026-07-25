@@ -86,4 +86,24 @@ describe('Interest Engine — Unit Tests', () => {
     expect(result.segments.length).toBe(2);
     expect(result.totalAccruedInterest).toBe(226.67);
   });
+
+  it('calculates interest starting strictly from interestPaidTill date when provided', () => {
+    const transactions = [
+      { id: '1', type: 'loan' as const, amount: 3000000, date: '2025-08-28' }
+    ];
+
+    const result = calculateBalanceState(
+      '2025-08-28',
+      0,
+      1.5,
+      transactions,
+      [],
+      '2026-07-25',
+      '2026-05-29' // Interest paid till 29 May 2026 -> 56 days to 25 July 2026
+    );
+
+    // 56 days * 3,000,000 * (1.5/100/30) = 56 * 1500 = 84000
+    expect(result.currentPrincipal).toBe(3000000);
+    expect(result.outstandingInterest).toBe(84000);
+  });
 });

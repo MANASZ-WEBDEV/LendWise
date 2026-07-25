@@ -4,6 +4,7 @@ import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, delet
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
 import { getQuarterlyStatus, computeQuarterlyInterestAmount, addQuarterToDate } from '../lib/quarterly-utils';
+import { getDaysDifference } from '../lib/interest-engine';
 import { EditPersonModal } from './EditPersonModal';
 import { EditInterestPaidTillModal } from './EditInterestPaidTillModal';
 import { SwipeToCollect } from './SwipeToCollect';
@@ -389,31 +390,46 @@ export const PersonDetailView: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-4 bg-[#faf2ec] rounded-lg border border-dashed border-[#ddbfc6] space-y-3 font-['JetBrains_Mono'] text-xs">
-                      <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
-                        <span className="text-[#574147]">Monthly Interest Rate</span>
-                        <span className="font-bold text-[#620032]">{balance.current_rate}% / month</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
-                        <span className="text-[#574147]">Daily Interest Rate</span>
-                        <span className="font-bold text-[#1e1b17]">
-                          {(balance.current_rate / 30).toFixed(4)}% / day
-                        </span>
-                      </div>
+                    {(() => {
+                      const accrualStartDate = balance.interest_paid_till || initialDate;
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const daysAccrued = accrualStartDate < todayStr ? getDaysDifference(accrualStartDate, todayStr) : 0;
+                      return (
+                        <div className="p-4 bg-[#faf2ec] rounded-lg border border-dashed border-[#ddbfc6] space-y-3 font-['JetBrains_Mono'] text-xs">
+                          <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                            <span className="text-[#574147]">Monthly Interest Rate</span>
+                            <span className="font-bold text-[#620032]">{balance.current_rate}% / month</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                            <span className="text-[#574147]">Daily Interest Rate</span>
+                            <span className="font-bold text-[#1e1b17]">
+                              {(balance.current_rate / 30).toFixed(4)}% / day
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                            <span className="text-[#574147]">Accrual Start Date</span>
+                            <span className="font-bold text-[#1e1b17]">{accrualStartDate}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#ddbfc6]/40">
+                            <span className="text-[#574147]">Days Accrued</span>
+                            <span className="font-bold text-[#620032]">{daysAccrued} days</span>
+                          </div>
 
-                      <div className="pt-2">
-                        <p className="text-[10px] uppercase font-bold text-[#574147] mb-2">Live Interest Formula</p>
-                        <p className="p-2.5 bg-white rounded border border-[#ddbfc6] text-[11px] leading-relaxed text-[#1e1b17]">
-                          {formatINR(balance.principal)} × ({balance.current_rate}% ÷ 30) ={' '}
-                          <strong>{formatINR(balance.principal * (balance.current_rate / 100 / 30))} / day</strong>
-                        </p>
-                      </div>
+                          <div className="pt-2">
+                            <p className="text-[10px] uppercase font-bold text-[#574147] mb-2">Live Interest Formula</p>
+                            <p className="p-2.5 bg-white rounded border border-[#ddbfc6] text-[11px] leading-relaxed text-[#1e1b17]">
+                              {formatINR(balance.principal)} × ({balance.current_rate}% ÷ 30) ={' '}
+                              <strong>{formatINR(balance.principal * (balance.current_rate / 100 / 30))} / day</strong>
+                            </p>
+                          </div>
 
-                      <div className="flex justify-between py-2 text-[#620032] font-bold text-sm border-t border-[#ddbfc6]">
-                        <span>Total Live Accrued</span>
-                        <span>{formatINR(liveAccruedInterest)}</span>
-                      </div>
-                    </div>
+                          <div className="flex justify-between py-2 text-[#620032] font-bold text-sm border-t border-[#ddbfc6]">
+                            <span>Total Live Accrued ({daysAccrued}d)</span>
+                            <span>{formatINR(liveAccruedInterest)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

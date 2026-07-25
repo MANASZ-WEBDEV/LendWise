@@ -88,7 +88,8 @@ export function calculateBalanceState(
   initialMonthlyRate: number,
   transactions: TransactionRecord[],
   rateHistory: RateHistoryRecord[],
-  asOfDate: string
+  asOfDate: string,
+  interestPaidTill?: string
 ): InterestAccrualResult {
   // Sort rate history chronologically
   const rates = [...rateHistory].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
@@ -102,11 +103,14 @@ export function calculateBalanceState(
     return (a.created_at || '').localeCompare(b.created_at || '');
   });
 
-  // Collect all timeline boundary dates (loan start, rate changes, transactions, asOfDate)
+  // Collect all timeline boundary dates (loan start, rate changes, transactions, interestPaidTill, asOfDate)
   const boundarySet = new Set<string>();
   boundarySet.add(initialLoanDate);
   if (asOfDate >= initialLoanDate) {
     boundarySet.add(asOfDate);
+  }
+  if (interestPaidTill && interestPaidTill >= initialLoanDate && interestPaidTill <= asOfDate) {
+    boundarySet.add(interestPaidTill);
   }
 
   rates.forEach(r => {
@@ -172,9 +176,12 @@ export function calculateBalanceState(
     if (days > 0 && currentPrincipal > 0) {
       const activeRate = getActiveRate(segStart);
       const interestForSeg = computePeriodInterest(currentPrincipal, activeRate, days);
+      const isPaidTill = Boolean(interestPaidTill && segEnd <= interestPaidTill);
 
-      totalAccruedInterest += interestForSeg;
-      outstandingInterest += interestForSeg;
+      if (!isPaidTill) {
+        totalAccruedInterest += interestForSeg;
+        outstandingInterest += interestForSeg;
+      }
 
       segments.push({
         startDate: segStart,
@@ -182,7 +189,7 @@ export function calculateBalanceState(
         days,
         principal: currentPrincipal,
         monthlyRate: activeRate,
-        interestAccrued: interestForSeg,
+        interestAccrued: isPaidTill ? 0 : interestForSeg,
       });
     }
   }

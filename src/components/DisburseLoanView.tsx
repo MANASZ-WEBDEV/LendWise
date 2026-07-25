@@ -48,7 +48,8 @@ export const DisburseLoanView: React.FC = () => {
   const numPrincipal = parseFloat(principal) || 0;
   const numRate = parseFloat(monthlyRate) || 0;
   const todayStr = new Date().toISOString().split('T')[0];
-  const elapsedDays = date < todayStr ? getDaysDifference(date, todayStr) : 0;
+  const interestStartCalcDate = interestPaidTill || date;
+  const elapsedDays = interestStartCalcDate < todayStr ? getDaysDifference(interestStartCalcDate, todayStr) : 0;
   const estimatedAccrued = computePeriodInterest(numPrincipal, numRate, elapsedDays);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -222,7 +223,7 @@ export const DisburseLoanView: React.FC = () => {
               <div className="text-xs font-['JetBrains_Mono'] text-[#1e1b17] space-y-1">
                 <p className="font-bold text-[#620032]">Backdated Loan Entry Detected</p>
                 <p>
-                  This loan started <strong>{elapsedDays} days ago</strong> on {date}. The engine will automatically compute accrued interest of approximately <strong>{formatINR(estimatedAccrued)}</strong> up to today.
+                  Interest accrual starts <strong>{elapsedDays} days ago</strong> on {interestStartCalcDate}. The engine will automatically compute accrued interest of approximately <strong>{formatINR(estimatedAccrued)}</strong> up to today.
                 </p>
               </div>
             </div>
