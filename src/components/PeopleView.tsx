@@ -181,7 +181,16 @@ export const PeopleView: React.FC = () => {
                       <div>
                         <h3 className="font-bold text-lg text-[#1e1b17] group-hover:text-[#620032] transition-colors leading-tight">
                           {s.person.name}
+                          {s.person.is_wm && (
+                            <sup className="ml-1 text-[10px] font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-1 py-0.5 rounded">WM</sup>
+                          )}
                         </h3>
+                        {s.person.phone && (
+                          <p className="text-xs text-[#574147] mt-0.5 font-['JetBrains_Mono'] flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">call</span>
+                            {s.person.phone}
+                          </p>
+                        )}
                         {s.person.notes && (
                           <p className="text-xs text-[#574147] line-clamp-1 mt-0.5 font-['Inter']">
                             {s.person.notes}

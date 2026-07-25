@@ -103,14 +103,33 @@ export const PersonDetailView: React.FC = () => {
         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#620032] text-white flex items-center justify-center font-['JetBrains_Mono'] text-xl sm:text-2xl font-bold shadow-xs shrink-0">
           {summary.person.name.charAt(0).toUpperCase()}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#620032] leading-tight">
             {summary.person.name}
+            {summary.person.is_wm && (
+              <sup className="ml-1.5 text-xs font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-1.5 py-0.5 rounded">WM</sup>
+            )}
           </h1>
           {summary.person.notes && (
             <p className="text-xs text-[#574147] font-['JetBrains_Mono'] mt-0.5">
               {summary.person.notes}
             </p>
+          )}
+          {summary.person.phone && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-[#574147] font-['JetBrains_Mono'] flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">call</span>
+                {summary.person.phone}
+              </span>
+              <a
+                href={`tel:${summary.person.phone}`}
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#ffd9e2] text-[#8b004a] font-['JetBrains_Mono'] text-[11px] font-bold rounded-md hover:bg-[#ffb0c9] transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="material-symbols-outlined text-sm">phone_in_talk</span>
+                Call
+              </a>
+            </div>
           )}
         </div>
       </div>

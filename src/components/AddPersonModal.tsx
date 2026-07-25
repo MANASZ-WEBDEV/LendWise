@@ -14,7 +14,9 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({
   onPersonAdded,
 }) => {
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [isWm, setIsWm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -28,10 +30,12 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({
 
     setSubmitting(true);
     try {
-      await createPerson(name, notes);
+      await createPerson(name, notes, phone, isWm);
       toast.success(`Contact ${name.trim()} added successfully!`);
       setName('');
+      setPhone('');
       setNotes('');
+      setIsWm(false);
       onPersonAdded();
       onClose();
     } catch (err: any) {
@@ -79,15 +83,53 @@ export const AddPersonModal: React.FC<AddPersonModalProps> = ({
 
           <div className="space-y-1">
             <label className="font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
+              Phone Number (Optional)
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. +91 98765 43210"
+              className="w-full h-11 px-4 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] focus:ring-1 focus:ring-[#620032] outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
               Notes / Context (Optional)
             </label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Friend from college, phone number, etc."
+              placeholder="e.g. Friend from college, etc."
               className="w-full p-3 bg-white border border-[#ddbfc6] rounded-lg text-sm focus:border-[#620032] focus:ring-1 focus:ring-[#620032] outline-none"
             />
+          </div>
+
+          {/* WM Toggle */}
+          <div className="flex items-center gap-3 p-3 bg-[#faf2ec] rounded-lg border border-[#ddbfc6]/50">
+            <button
+              type="button"
+              onClick={() => setIsWm(!isWm)}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                isWm ? 'bg-[#8b004a]' : 'bg-[#ddbfc6]'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                  isWm ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+            <div>
+              <span className="text-sm font-semibold text-[#1e1b17] block">
+                Mark as WM
+              </span>
+              <span className="text-[11px] text-[#574147]">
+                Displays as Name<sup className="text-[#8b004a] font-bold">WM</sup> badge
+              </span>
+            </div>
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-[#ddbfc6]">

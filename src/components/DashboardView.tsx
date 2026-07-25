@@ -180,6 +180,9 @@ export const DashboardView: React.FC = () => {
                             </div>
                             <span className="font-bold text-[#1e1b17] text-sm">
                               {s.person.name}
+                              {s.person.is_wm && (
+                                <sup className="ml-1 text-[9px] font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-0.5 py-0.5 rounded">WM</sup>
+                              )}
                             </span>
                           </div>
                           <span className="font-['JetBrains_Mono'] text-sm font-bold text-[#8b004a]">
@@ -236,9 +239,12 @@ export const DashboardView: React.FC = () => {
                                   {s.person.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-[#1e1b17] text-sm group-hover:text-[#620032] transition-colors">
-                                    {s.person.name}
-                                  </span>
+                                    <span className="font-bold text-[#1e1b17] text-sm group-hover:text-[#620032] transition-colors">
+                                     {s.person.name}
+                                     {s.person.is_wm && (
+                                       <sup className="ml-1 text-[9px] font-['JetBrains_Mono'] font-bold text-[#8b004a] bg-[#ffd9e2] px-0.5 py-0.5 rounded">WM</sup>
+                                     )}
+                                    </span>
                                   {s.person.notes && (
                                     <span className="text-xs text-[#574147] truncate max-w-[200px]">
                                       {s.person.notes}

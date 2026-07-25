@@ -12,6 +12,8 @@ create table people (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
+  phone text,
+  is_wm boolean not null default false,
   notes text,
   archived_at timestamptz default null,
   created_at timestamptz not null default now()
@@ -80,3 +82,7 @@ create policy "Users can manage their own rate history" on rate_history
 
 create policy "Users can manage their own transactions" on transactions
   for all using (auth.uid() = user_id);
+
+-- 5. MIGRATION (run on existing database if tables already exist)
+-- ALTER TABLE people ADD COLUMN phone text;
+-- ALTER TABLE people ADD COLUMN is_wm boolean NOT NULL DEFAULT false;

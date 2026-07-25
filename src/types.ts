@@ -14,6 +14,8 @@ export interface DbPerson {
   id: string;
   user_id: string;
   name: string;
+  phone: string | null;
+  is_wm: boolean;
   notes: string | null;
   archived_at: string | null;
   created_at: string;

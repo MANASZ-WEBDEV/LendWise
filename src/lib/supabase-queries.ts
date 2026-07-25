@@ -19,7 +19,7 @@ export async function fetchPeople(): Promise<DbPerson[]> {
 /**
  * Create a new person in the database.
  */
-export async function createPerson(name: string, notes?: string): Promise<DbPerson> {
+export async function createPerson(name: string, notes?: string, phone?: string, isWm?: boolean): Promise<DbPerson> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
@@ -29,7 +29,35 @@ export async function createPerson(name: string, notes?: string): Promise<DbPers
       user_id: user.id,
       name: name.trim(),
       notes: notes?.trim() || null,
+      phone: phone?.trim() || null,
+      is_wm: isWm || false,
     })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Update an existing person's details.
+ */
+export async function updatePerson(personId: string, updates: {
+  name?: string;
+  notes?: string;
+  phone?: string;
+  is_wm?: boolean;
+}): Promise<DbPerson> {
+  const updatePayload: Record<string, any> = {};
+  if (updates.name !== undefined) updatePayload.name = updates.name.trim();
+  if (updates.notes !== undefined) updatePayload.notes = updates.notes.trim() || null;
+  if (updates.phone !== undefined) updatePayload.phone = updates.phone.trim() || null;
+  if (updates.is_wm !== undefined) updatePayload.is_wm = updates.is_wm;
+
+  const { data, error } = await supabase
+    .from('people')
+    .update(updatePayload)
+    .eq('id', personId)
     .select()
     .single();
 
