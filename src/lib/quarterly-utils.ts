@@ -74,6 +74,43 @@ export interface QuarterlyStatus {
 }
 
 /**
+ * Calculates exactly 3 months (90 days) of interest for a given principal and monthly rate.
+ * Formula: principal * (monthlyRate / 100) * 3
+ */
+export function computeQuarterlyInterestAmount(principal: number, monthlyRate: number): number {
+  if (principal <= 0 || monthlyRate <= 0) return 0;
+  const rawAmount = principal * (monthlyRate / 100) * 3;
+  return Math.round(rawAmount * 100) / 100;
+}
+
+/**
+ * Advances a date string ('YYYY-MM-DD') by 3 months (90 days in 30-day month convention).
+ */
+export function addQuarterToDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+
+  let year = d.getUTCFullYear();
+  let month = d.getUTCMonth() + 3; // add 3 months
+  let day = d.getUTCDate();
+
+  if (month > 11) {
+    year += Math.floor(month / 12);
+    month = month % 12;
+  }
+
+  // Handle month end overflows
+  const daysInTargetMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  if (day > daysInTargetMonth) {
+    day = daysInTargetMonth;
+  }
+
+  const mm = String(month + 1).padStart(2, '0');
+  const dd = String(day).padStart(2, '0');
+  return `${year}-${mm}-${dd}`;
+}
+
+/**
  * Computes the full quarterly status for a balance.
  */
 export function getQuarterlyStatus(

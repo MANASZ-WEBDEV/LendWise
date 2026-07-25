@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, recordRepaymentTransaction } from '../lib/supabase-queries';
+import { fetchPeople, fetchPersonSummary, recordRateChange, archivePerson, recordRepaymentTransaction, updateBalanceInterestPaidTill } from '../lib/supabase-queries';
 import { PersonSummary, DbTransaction } from '../types';
 import { formatINR } from '../lib/currency';
-import { getQuarterlyStatus } from '../lib/quarterly-utils';
+import { getQuarterlyStatus, computeQuarterlyInterestAmount, addQuarterToDate } from '../lib/quarterly-utils';
 import { EditPersonModal } from './EditPersonModal';
 import { EditInterestPaidTillModal } from './EditInterestPaidTillModal';
 import { SwipeToCollect } from './SwipeToCollect';
@@ -294,9 +294,11 @@ export const PersonDetailView: React.FC = () => {
                 {/* Quarterly Interest Swipe-to-Collect (lent balances only) */}
                 {balance.direction === 'lent' && balance.principal > 0 && (() => {
                   const quarterlyStatus = getQuarterlyStatus(transactions, initialDate, undefined, balance.interest_paid_till);
+                  const quarterlyInterest = computeQuarterlyInterestAmount(balance.principal, balance.current_rate);
+
                   return (
                     <SwipeToCollect
-                      interestAmount={liveAccruedInterest}
+                      interestAmount={quarterlyInterest}
                       daysSinceLastCollection={quarterlyStatus.daysSinceLastCollection}
                       daysUntilAvailable={quarterlyStatus.daysUntilAvailable}
                       isAvailable={quarterlyStatus.isAvailable}
@@ -304,15 +306,22 @@ export const PersonDetailView: React.FC = () => {
                       onCollect={async () => {
                         try {
                           const todayStr = new Date().toISOString().split('T')[0];
+                          const newPaidTillDate = addQuarterToDate(quarterlyStatus.lastCollectionDate);
+
+                          // Record repayment transaction for 90 days of interest
                           await recordRepaymentTransaction({
                             balanceId: balance.id,
-                            amount: liveAccruedInterest,
+                            amount: quarterlyInterest,
                             outstandingInterest: liveAccruedInterest,
                             currentPrincipal: balance.principal,
                             date: todayStr,
-                            notes: `Quarterly interest payment (auto-collected) — ${quarterlyStatus.daysSinceLastCollection} days accrued`,
+                            notes: `Quarterly interest payment (auto-collected) — 90 days interest paid`,
                           });
-                          toast.success(`Collected ${formatINR(liveAccruedInterest)} quarterly interest!`);
+
+                          // Update interest_paid_till date to +90 days / +3 months
+                          await updateBalanceInterestPaidTill(balance.id, newPaidTillDate);
+
+                          toast.success(`Collected ${formatINR(quarterlyInterest)} quarterly interest! Interest paid till updated to ${newPaidTillDate}`);
                           if (id) loadData(id);
                         } catch (err: any) {
                           toast.error('Failed to collect interest: ' + (err.message || 'Unknown error'));
