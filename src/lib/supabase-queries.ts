@@ -218,10 +218,14 @@ export async function recordLoanDisbursement(params: {
   amount: number;
   monthlyRate: number;
   date: string; // ISO date 'YYYY-MM-DD'
+  interestPaidTill?: string; // Optional: for onboarding existing loans
   notes?: string;
 }): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
+
+  // Use interestPaidTill if provided, otherwise default to loan start date
+  const effectiveInterestPaidTill = params.interestPaidTill || params.date;
 
   // Check if balance exists for (personId, direction)
   const { data: existingBalances, error: bErr } = await supabase
@@ -237,11 +241,11 @@ export async function recordLoanDisbursement(params: {
   if (existingBalances && existingBalances.length > 0) {
     balanceId = existingBalances[0].id;
 
-    // Reset interest_paid_till to new loan date and update rate if changed
+    // Reset interest_paid_till and update rate if changed
     await supabase
       .from('balances')
       .update({
-        interest_paid_till: params.date,
+        interest_paid_till: effectiveInterestPaidTill,
         current_rate: params.monthlyRate,
         updated_at: new Date().toISOString(),
       })
@@ -257,7 +261,7 @@ export async function recordLoanDisbursement(params: {
         principal: 0,
         outstanding_interest: 0,
         current_rate: params.monthlyRate,
-        interest_paid_till: params.date,
+        interest_paid_till: effectiveInterestPaidTill,
       })
       .select()
       .single();

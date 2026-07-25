@@ -22,6 +22,7 @@ export const DisburseLoanView: React.FC = () => {
   const [principal, setPrincipal] = useState<string>('10000');
   const [monthlyRate, setMonthlyRate] = useState<string>('1.5');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [interestPaidTill, setInterestPaidTill] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export const DisburseLoanView: React.FC = () => {
         amount: numPrincipal,
         monthlyRate: numRate,
         date,
+        interestPaidTill: interestPaidTill || undefined,
         notes,
       });
 
@@ -196,6 +198,22 @@ export const DisburseLoanView: React.FC = () => {
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full h-11 px-4 bg-[#fff8f3] border border-[#ddbfc6] rounded-lg text-sm font-['Inter'] focus:border-[#620032] outline-none"
               />
+            </div>
+
+            {/* Interest Paid Till (for onboarding old loans) */}
+            <div className="space-y-1.5">
+              <label className="block font-['JetBrains_Mono'] text-xs uppercase font-bold text-[#574147]">
+                Interest Paid Till (Optional)
+              </label>
+              <input
+                type="date"
+                value={interestPaidTill}
+                onChange={(e) => setInterestPaidTill(e.target.value)}
+                className="w-full h-11 px-4 bg-[#fff8f3] border border-[#ddbfc6] rounded-lg text-sm font-['Inter'] focus:border-[#620032] outline-none"
+              />
+              <p className="text-[10px] text-[#8a7077] font-['JetBrains_Mono']">
+                For existing loans — enter the date up to which interest has already been collected. Leave blank for new loans.
+              </p>
             </div>
           </div>
 
